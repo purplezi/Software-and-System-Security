@@ -48,5 +48,14 @@
 - 在数据库插入语句中%s，两边不加引号 - 否则会错
 - string转bytes
 - post和get的关系和位置
+- 顺序不能发生变化
+  ```
+  self.send_response(200)
+  self.send_header("Content-type", "text/html")
+  self.end_headers()
+  self.wfile.write(form_html.encode())
+  ```
 
 ## 参考资料
+
+- [Python BaseHTTPServer 模块解析](https://blog.csdn.net/xhw88398569/article/details/49179967)
