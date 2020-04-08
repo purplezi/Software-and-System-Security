@@ -67,7 +67,7 @@ class MyHTTPServer(HTTPServer):
 
 if '__main__' == __name__:
     server_ip = "0.0.0.0"
-    server_port = 5050
+    server_port = 8080
     if len(sys.argv) == 2:
         server_port = int(sys.argv[1])
     if len(sys.argv) == 3:
