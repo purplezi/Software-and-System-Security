@@ -12,11 +12,17 @@
 
 ### sqlite的使用
 
-- 创建一个数据库名为`edu_admin.db`，并且新建`teacher`表格。代码如下所示，具体见[dbinstruction.py](./code/dbinstructions.py)文件
+- 创建一个数据库名为`edu_admin.db`，并且新建`teacher`表格
+- 指定数据类型，~~忽略下面的数据类型~~
+
+    <img src="./img/createdb.png">
+
+- 在sqlite数据库中创建表格字段的时候，允许不为字段申明数据类型
+- 代码如下所示，具体见[dbinstruction.py](./code/dbinstructions.py)文件
     ```py
     # -*- coding: utf-8 -*-
     import sqlite3
-    conn = sqlite3.connect('edu_admin.db')
+    conn = sqlite3.connect('./edu_admin.db')
     c = conn.cursor()
 
     # Create teacher table 
@@ -44,6 +50,8 @@ import cgi
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import sqlite3
 
+# 教师往数据库插入学生成绩
+# 数据库为python自带轻量级数据库sqlite
 def insert_into_db(course_id,student_id,grade):
     print("insert database")
     conn = sqlite3.connect('./edu_admin.db')
@@ -51,6 +59,7 @@ def insert_into_db(course_id,student_id,grade):
     try:
         c.execute("select * from teacher where courseid = %s and studentid = %s " % (course_id,student_id))
         jud = c.fetchall()
+        # 如果学生已有成绩，不允许重复插入
         if len(jud) == 0:
             c.execute("INSERT INTO teacher VALUES (%s,%s,%s)" %(course_id,student_id,grade))
             # Save (commit) the change
@@ -60,6 +69,7 @@ def insert_into_db(course_id,student_id,grade):
         conn.rollback()
     conn.close()
 
+# 学生从数据库中查询成绩信息
 def select_from_db(course_id,student_id):
     print("select database")
     conn = sqlite3.connect('./edu_admin.db')
@@ -67,6 +77,7 @@ def select_from_db(course_id,student_id):
     try:
         c.execute("select * from teacher where courseid = %s and studentid = %s " % (course_id,student_id))
         res = c.fetchall()
+        # 没有查到该学生的成绩
         if len(res) == 0:
             print("no student / no course")
             conn.close()
@@ -146,6 +157,7 @@ class MyHTTPRequestHandler(BaseHTTPRequestHandler):
                 'CONTENT_TYPE': self.headers['Content-Type'],
             })
         fields = form_data.keys()
+        # 需要判断是哪个页面进行了提交
         if len(fields) == 2:
             if self.course_id in fields and self.student_id in fields:
                 course = form_data[self.course_id].value
@@ -195,6 +207,7 @@ class MyHTTPServer(HTTPServer):
         HTTPServer.__init__(self,  (host, port), MyHTTPRequestHandler)
 
 # 程序入口
+# 主函数沿用老师代码
 if '__main__' == __name__:
     server_ip = "127.0.0.1"
     server_port = 8080
@@ -209,22 +222,35 @@ if '__main__' == __name__:
     server.serve_forever()
 ```
 
-### 结果显示以及XSS攻击
+### 结果显示
 
+- 运行的时候需要在打开同目录下code目录作为根目录运行，即如下所示
+
+    <img src="./img/directory.png" width=50%>
+  
+  在vs下可以cd code，然后code .打开新的窗口运行
+  
 - 插入，查询
 
     <img src="./img/insertandquery.gif">
 
+- 进行存储型的xss攻击，这个代码由于插入使用的是%s，所以该条含有html标签的代码是无法被插入到数据库中
+  - 但是如果程序未作处理，用户向数据库中写入恶意代码，还是能够展现在页面上，实现xss攻击。所以要在代码的处理和数据库两方面进行要求，防范xss等攻击。
+        
+    <img src="./img/xss.gif">
+
+  - SQLite最大的特点在于其数据类型为无数据类型(typelessness)。这意味着可以保存任何类型的数据到所想要保存的任何表的任何列中，无论这列声明的数据类型是什么。虽然在生成表结构的时候，要声明每个域的数据类型，但SQLite并不做任何检查，开发人员要靠自己的程序来控制输入与读出数据的类型
+
 ## 问题与解决
 
 - Message: Unsupported method ('POST'). Error 501 Python
-  解决：POST和GET是平级关系，一开始把POST放在GET中了。
+  解决：POST和GET是平级关系，一开始把POST放在GET中了
 
 ## 实验总结
 
-- 在数据库插入语句中%s，两边不加引号 - 否则会错
-- string转bytes
-- post和get的关系和位置
+- 在数据库插入语句中`INSERT INTO teacher VALUES (%s,%s,%s)`，其中%s两边不加引号 - 否则会错
+- python中string转bytes：`str.encode()`
+- post和get的关系和位置：平级
 - 顺序不能发生变化
   ```py
   self.send_response(200)

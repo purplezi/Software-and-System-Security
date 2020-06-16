@@ -1,5 +1,5 @@
 # Software-and-System-Security-
-maybe more than 200 tasks ...
+maybe more than 200 tasks in the [list](#软件安全能力清单) ...
 
 # Tutorial
 
@@ -135,7 +135,7 @@ maybe more than 200 tasks ...
 
 http://programtrace.com/
 
-# 软件安全能力清单 
+# [软件安全能力清单](https://github.com/purplezi/Security-Development-Lifecycle) 
 
 **要求：对照清单，上面所有的东西都掌握，一项项检测自己的能力**
 
@@ -396,6 +396,383 @@ if '__main__' == __name__:
 ## 参考资料
 
 - [http methods](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods)
+
+</details>
+
+---
+
+<details>
+<summary>2020-3-25 sql注入 + 简易教务系统web应用 </summary>
+
+# sql注入
+
+`web程序开发和web程序`非常常见的一种漏洞
+
+## web程序的开发
+
+### 客户端(浏览器)和服务器
+
+用户使用**浏览器**访问**服务器**，服务器在云端(我们看不见)，只有一个域名对应的IP地址。浏览器通过**发送请求**到服务器，服务器收到请求以后返回响应。其中数据的发送和接受的底层是计算机网络。对web程序来说，主要关心`Requests and responses(一收一发)`的过程
+
+### 实验分析
+
+- 使用抓包器，抓取一次 web 访问过程中的数据包，分析一下 Requests and responses 数据的数据包格式，可以看到在 tcp 数据包的 payload 部分是 http 协议数据包，又分为了 headers 和 body 等部分
+- 浏览器发送的 Request ，最核心的部分是一个 url ，就是通常说的网址。比如`https://www.baidu.com/index.php?tn=request_1_pg&ch=1`，其中`/`前的部分，是主机地址，被解析为 ip 地址；第一个`/`后的部分为路径和参数，会对应服务器上的文件或者功能。服务器处理完毕返回 response ，一般是一个html格式的文本
+- 浏览器，会直接把html渲染为我们所看到的页面的不同样式。
+- html有自己专门的语法，其格式是以标签树的结构组织的，又可以嵌入js和css：js用来要求浏览器执行动态的效果，或者根据css的配置，对各种html的内部的标签和元素，显示不同的样式。
+
+    <img src="./readmeimg/2020-3-25-img/requestandresponse.png">
+
+  - 学习html和js最好的工具就是chrome的调试模式。所以必做的实验，就是用chrome的开发者工具的 `elements`、`sources`和`network`几个工具，分析网页
+
+### 开发一个web程序的基本过程
+
+使用python内置的库开发一个基本的http服务器端
+- 不是框架，是比较原始的http请求和响应过程。
+- 涉及Requests and responses、html、表单、get、post、url等基本概念
+- 但现在的web程序一般都比较复杂，会使用数据库，而且一般会有很多功能和页面
+
+**开发web程序的基础架构 / 框架(主流开发技术)**
+- 把web程序开发的一些底层的东西事先处理，开发者只需要关注功能的构建
+- 各种web后端编程语言，比如java、php、python都有自己的框架。比如python现在最火的框架是[Django](https://docs.djangoproject.com/en/3.0/)，然后是flask。
+  - 框架第一，把web开发流程变成了`mvc`结构。第二，提供了非常多丰富的web开发过程中需要使用的`库`。
+  - 框架处理了最基本的请求响应过程：把请求映射到了`处理函数`，程序员就不用管很多麻烦的底层过程，只需要专心业务逻辑的处理。
+  - 框架就是这些基本请求的函数的`封装`的整合
+
+#### django
+
+##### 基本使用
+
+- 安装
+  ```
+  pip install Django
+  python -m pip install Django
+  ```
+  - 如果pip安装速度很慢，大家可以修改pip使用的镜像源，改为国内的源
+- 构建一个基于Django的基本框架的web应用程序。
+  ```
+  django-admin startproject mysite
+  cd mysite
+  python manage.py startapp polls
+  python manage.py runserver
+  ```
+- 访问 http://127.0.0.1:8000/
+
+  <img src="./readmeimg/2020-3-25-img/django.png">
+
+  - 在命令行里可以看到服务器的打印输出，表示服务器收到了 request
+  - 在浏览器看到的页面就是框架自动返回给大家的response
+  - 说明request和response，请求相应的处理过程已经搭建起来
+
+##### 简单的教务管理系统
+
+- 教务管理系统肯定要用到**数据库**
+- mvc：编写大型程序的时候，一定要做到mvc分离
+  - m数据模型，我们要先建立基础的底层的数据结构
+  - c控制，处理用户输入，构建每个用户输入对应的处理函数
+  - v视图，在底层m数据模型的基础上，绘制用户界面
+  - 比如贪吃蛇游戏，最先做的事情是使用链表来保存蛇和食物的相应的数据，写一些处理这个数据的函数，供上层的c和v来调用，这个叫做**封装**。这是基本的编程思想，和正确的工作组织流程。
+- mvt:一个复杂的大型web程序，其实底层思想还是mvc，只是换了个名字，叫mvt，其中t是页面模板
+- 写Django或者任何框架的程序，主要就是写三大部分：第一，数据模型models；第二，views和url，是用户请求对应的处理程序；第三，前端页面模板，即处理完的结果如何显示的问题
+  - 其中url部分，又称为路由。把用户请求的url，对应到处理函数的过程。Django的处理函数，有一个专门名称，叫views。其基本过程就是框架收到用户的request，其中有URL。框架根据urls.py中的配置，将用户请求对应到一个处理函数，一般在views.py中。
+  - views.py中的函数，参数就是request对象，Django中是HttpRequest类，然后views函数需要返回一个HTTPResponse类型的request。Django把这个reqeust变化为http协议的request数据包，返回给浏览器。
+  - 一般在views的处理过程中，会访问数据库，也就是models。比如底层操作数据库是用sql语句，models把底层的数据库操作的sql全部封装为了对象化的处理。而最原始的web程序一般程序员会拼装sql语句，但是在Django中不用。这种底层数据的封装，称为orm(Object-relational Mapper)。
+
+##### 编程
+
+现在使用的数据库分两种：关系型数据库 & 非关系型数据库
+
+关系型数据库的基本结构是表，关系其实是指表与表之间的关系。其中教务系统这种信息管理类的软件，一般是使用关系型数据库
+
+首先就是设计数据库表结构
+
+```python
+class Course(models.Model):
+    name = models.CharField(verbose_name='课程名',  max_length=100)
+    number = models.IntegerField(verbose_name='编号', default=0)
+    summary = models.CharField(verbose_name='摘要', max_length=500, null=True)
+
+
+class Student(models.Model):
+    class_name = models.CharField(verbose_name="班级", max_length=100, blank=True,null=True)
+    phone_number = models.CharField(verbose_name='手机号', max_length=11,null=True)
+
+class Score(models.Model):
+    course = models.ForeignKey(Course, verbose_name='课程', on_delete=models.CASCADE, related_name='students')
+    student = models.ForeignKey(Student, verbose_name='学生', on_delete=models.CASCADE, related_name='my_courses')
+    score = models.FloatField(verbose_name='成绩',  null=True)
+```
+
+- 一个教务系统，需要表为：学生信息 课程信息 成绩信息
+- 表中的每个记录，都有一个唯一的编号，称为主键。而外键是其他表中主键记录。通常我们用外键来记录表和表的关系。
+- 其中成绩表就是学生和课程的关系，也就是选课。成绩表中的一个记录，表示某个学生，选了某门课程。成绩，是学生与课程的“关系”
+  - 所以成绩表需要记录的就是某学生某门课的分数。而学生和课程都有专门的表来记录，我们无需在成绩表中重复记录多余的信息，只需记录id
+  - 这个其他表中主键id，就是外键，所以外键体现了关系。
+  - 而每个表中的主键，这里没有明确说明。系统会自动增加一个id字段。这个id每次插入记录时自动增加。
+  
+Django把建表这种基本操作变成了python中的类的定义，所定义的这些类，直接继承models.Model。即程序员只需要写好这个models.py文件，所有的建表的操作框架就可以完成。大家可以建一个app ，比如叫 edu_admin ，命令为`python manage.py startapp edu_admin`
+  - `code .`可以用vscode创建一个新窗口并且打开当前目录
+  - 将上述内容直接放入edu_admin中的models.py，然后把这个表结构，真实的写入到数据库中，也就是create table的过程，在django中称为`migrate`
+  - 打开 mysite的 settings.py，在 INSTALLED_APPS 这里增加一个 edu_admin ，表示 edu_admin 这个是这个site的一个app。之前startapp命令只是创建了app，必须要把app写入到这里，这个app才会被纳入到站点功能中
+
+    <img src="./readmeimg/2020-3-25-img/addapp.png">
+
+  - 然后在命令行下执行 `python .\manage.py makemigrations` 和 `python .\manage.py migrate`，结果如下，同时会增加一个 `db.sqlite3`
+
+    <img src="./readmeimg/2020-3-25-img/migrate.png">
+
+    - makemigrations成功的标志是在app的目录下有migrations目录
+
+到此文件，数据库表结构就建立完成了。
+- Django这里默认使用了sqlite这种简单的文件型数据库。这种数据库的好处是一个文件来保存数据的所有信息，适合轻量级小规模的应用，但是效率和容量都有效，一般用在开发调试环境，不用在生产环境
+- 为了验证Django真的建立了表，下载一个[sqlite](https://www.sqlite.org/download.html)的客户端软件，查看数据库的表结构
+  - Windows下载`sqlite-tools-win32-x86-3310100.zip`，Linux直接`apt install sqlite3`
+  - 把sqlite.exe加入在PATH环境变量或者放在db.sqlite同一个目录，然后执行`sqlite3.exe db.sqlite3` (database的路径不能有中文)
+  - 进入到sqlite的命令行以后执行`.table`命令，可以看到所有的表，其中这三个表是在models中定义，其他表是Django自己要用的
+  - 可以执行sql语句，比如插入一条记录，如 insert 和 select 可以成功，说明表是好的
+
+    <img src="./readmeimg/2020-3-25-img/sqlite.png">
+
+## 作业
+
+在不使用Django的情况下，我们可以使用更底层的pyhton的[sqlite](https://docs.python.org/3/library/sqlite3.html)库来编程操作数据库。在httpserver.py的基础上，继续编写漏洞。写两个页面，一个是教师录入成绩页面，一个是学生查询成绩页面。教师录入成绩页面表单有三个字段，课程id，学生id，成绩。录入提交以后，httpserver调用sqlite库使用sql语句写入数据库。然后是学生查询成绩表单，学生输入学生id，课程id，httpserver使用sql语句查询成绩后返回给用户。这里不需要做登录功能，课程也用直接输入id而不是下拉菜单的方式，或者其他选择的方式，而是直接输入id，为了体验最原始的web的开发过程
+
+</details>
+
+---
+
+<details>
+<summary>2020-4-1 web程序设计和SQL注入 [无作业]</summary>
+
+# web程序设计和SQL注入
+
+###### 工程目录
+
+<img src="./readmeimg/2020-4-1-img/directory.png" width=50%>
+
+###### 数据库edu_admin回顾
+
+使用Django这种框架编程，第一步是定义模型，Django会自动把定义好的模型转化为数据库表结构，这种方式称为 ORM
+
+在models里定义了三个类，然后执行了生成migrations和migrate，即数据库的表就建立完成，以后每次修改了models，都需要执行makemigrations和migrate，才能将修改结果对应到数据库中
+
+## 编写view
+
+views是Django功能实现应用功能的地方。如果想写一个动态的页面，就在views中定义一个函数。这是最基本的方法。在此基本的方法上还可以有高级的，系统内置的一些高级的数据库增删改查的方法
+
+最基本的views函数，是收到一个HttpRequest类型的参数，需要返回一个HTTPResponse类型的返回值，和http协议对应。
+
+在edu_admin中的views.py写入如下内容，这个函数就是一个基本的 “处理请求，返回响应”的过程
+
+```python
+from django.http import HttpResponse
+def index(request):
+return HttpResponse('<html><body>OK</body></html>')
+```
+
+需要把这个views，对应到一个路径上，也就是客户端需要调用这个views函数对应的功能。因为一个实用的web app只有一个views是不够的，可能有很多很多views，然后需要把这些views对应到不同的url上，这样客户端才能访问。
+
+这个工作，是urls.py来完成的。在 edu_admin 中建一个urls.py文件，写入如下内容
+```python
+from django.urls import path
+from .views import *
+
+urlpatterns = [
+     path('index', index),
+]
+```
+
+然后需要在`主urls.py`，也就是 mysite 的urls.py中包括这个url配置。这是为了适应可能有多个Django app共同工作的情况，比如这里的edu_admin是一个app，polls又是一个app
+```python
+path('edu/',include('edu_admin.urls')),
+```
+
+## 运行网站，查看效果
+
+执行命令 `python manage.py runserver` 命令，也可以在vscode中调试运行
+
+即在运行调试的时候，在调试页面，生成一个 lanuch.json ，选python Django。默认配置，生成的launch.json如下所示。lanuch.json的作用就是告诉vscode启动程序运行,任何一种编程语言和平台，都会有  lanuch.json。
+  
+  <img src="./readmeimg/2020-4-1-img/runanddebug.png" width=50%>
+
+  <img src="./readmeimg/2020-4-1-img/launch.png">
+
+访问` 127.0.0.1:8000`，这个是404页面，说明我们访问的url路径并不存在
+  
+  <img src="./readmeimg/2020-4-1-img/pagenotfound.png">
+
+只有 edu/ 和admin/两个路径存在。正如我们在 urls.py中配置的一样，访问 http://127.0.0.1:8000/edu/index
+  
+  <img src="./readmeimg/2020-4-1-img/ok.jpg" width=70%>
+
+成功访问说明我们urls和views配合工作成功：用户在浏览器中输入路径，django把这个url对应到一个views函数上，views函数处理HttpRequest，返回HttpResponse
+
+把url对应到一个views函数的过程，叫“路由”。注意，这个路由不是路由器的那个路由。路由器的路由是IP层的IP数据包分发功能。web框架的路由只是借用了这个概念，引申为 web 程序中 url 和处理函数的对应关系
+- 注意一个url是可以带参数的，views函数也是可以带参数的。如下代码中，pk就是参数，而且只允许整数。路由系统会把这个参数赋值传递给views函数的pk参数。
+  ```python
+  # edu_admin/urls.py 的urlpatterns修改为
+  urlpatterns = [
+    path('index/<int:pk>',index),
+  ]
+
+  # edu_admin/views.py
+  def index(request,pk):
+    return HttpResponse('<html><body>Hello World %d </body></html>' % pk)
+  ```
+
+  - 在浏览器中输入`127.0.0.1/edu/index/1`，得到的结果如下：
+
+    <img src="./readmeimg/2020-4-1-img/addpk.png" width=50%>
+
+## 在views中访问数据库
+
+### 修改views.py
+
+```python
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
+
+from .models import Score
+
+def index(request, pk):
+    return HttpResponse('<html><body>hello world %d </body></html>' % pk)
+
+# Create your views here.
+
+@login_required
+def my_score(request):
+    result = Score.objects.filter(student=request.user)
+    return render(request, 'score.html', {'result': result})
+```
+
+### 代码解释
+
+- 先从models中导入模型类Score
+  ```
+  # edu_min/views.py
+  from .models import Score
+  ```
+- 然后调用这个模型类的objects的filter方法完成了一次sql select。filter函数的参数是就相当于查询的过滤条件。我们要查询的是 student 为当前登录用户的Score表的记录：`Score.objects.filter(student=request.user)`。Django中，当前登录用户，就在request对象的user属性中
+
+### 修改模型
+
+views写了还不够，我们还需要修改一下模型。Django是有默认的用户管理系统的，用户相关的数据库表结构其实Django已经建立好了，但是我们这里用了student表来作为系统用户。所以我们要告诉Django不要用系统默认的用户模型了，用Student
+
+首先在 models.py中 导入`from django.contrib.auth.models import AbstractUser`，这个是Django默认的用户管理的数据库模型，然后继承修改自`class Student(AbstractUser):`
+
+AbstractUser已经有很多数据库字段，比如密码肯定是需要以某种方式保存到数据库中的。在AbstractUser的基础上，扩充几个要用的字段就可以了。修改模型为：
+
+```python
+from django.db import models
+
+# Create your models here.
+
+from django.contrib.auth.models import AbstractUser
+
+class Course(models.Model):
+    name = models.CharField(verbose_name='课程名',  max_length=100)
+    number = models.IntegerField(verbose_name='编号', default=0)
+    summary = models.CharField(verbose_name='摘要', max_length=500, null=True)
+
+    def __str__(self):
+        return self.name
+
+class Student(AbstractUser):
+    class_name = models.CharField(verbose_name="班级", max_length=100, blank=True, null=True)
+    name = models.CharField(verbose_name="姓名", max_length=100, blank=True, null=True)
+    number = models.IntegerField(verbose_name="学号", default=0)
+    phone_number = models.CharField(verbose_name='手机号', max_length=11,null=True)
+
+class Score(models.Model):
+    course = models.ForeignKey(Course, verbose_name='课程', on_delete=models.CASCADE, related_name='students')
+    student = models.ForeignKey(Student, verbose_name='学生', on_delete=models.CASCADE, related_name='my_courses')
+    score = models.FloatField(verbose_name='成绩',  null=True)
+```
+
+Student继承了AbstractUser后，告诉Django用Student作为系统用户管理的数据库模型
+
+在mysite settings.py也就是整个站点的配置文件中，增加一条：`AUTH_USER_MODEL = 'edu_admin.Student'`，即告诉Django，使用 edu_admin 的Student作为用户管理登录授权的模型
+
+代码修改完以后，由于涉及到数据库修改，所以要进行数据库表结构的migrate，前一步生成迁移文件，后一步实施迁移，迁移过程中，可能会要求输入一些默认值，选择1，而后全部都输入为空字符串就可以' '。执行结果如下所示
+
+<img src="./readmeimg/2020-4-1-img/makemigrationsdefault.png">
+
+<img src="./readmeimg/2020-4-1-img/migrateandmigration.png">
+
+## 测试Django数据库访问是否正常
+
+最原始的方法就是在sqlite.exe 中用sql语句插入。但是这个方法容易把数据搞乱了，而且比如用户密码这样的东西，不是明文保存的，所有插入会有问题
+
+用Django的方式，先建立一个超级用户，执行`python manage.py createsuperuser`
+- 建立一个管理员账户，用sqlite3.exe可以看到Student表多了一条记录
+- 然后我们可以用Django的admin功能，用超级管理员录入数据。Django的admin相当于一个数据管理的超级权限后台，可以直接操作数据库
+- 在edu_admin/admin.py中录入以下内容，这样直接就可以生成一个管理数据库的后台页面
+    ```python
+    from django.contrib import admin
+
+    # Register your models here.
+    from .models import Student, Course, Score
+
+    class ScoreAdmin(admin.ModelAdmin):
+        list_display = ('course', 'score','student')
+
+    admin.site.register(Student)
+    admin.site.register(Course)
+    admin.site.register(Score, ScoreAdmin)
+    ```
+- 访问 http://127.0.0.1:8000/admin/ ，登录后看到这个页面
+  
+  <img src="./readmeimg/2020-4-1-img/admin.png">
+
+- 该页面上可以录入一些课程，学生，和成绩了。录入成绩前，先录入学生和课程。录入以后，在数据用sql也能查询到
+  
+  <img src="./readmeimg/2020-4-1-img/inputdata.png">
+
+  - 本身createsuperuser时的admin也是一个学生
+
+  出现外键错误的解决方法：删掉同目录的数据库文件 db.sqlite3，重新进行一次makemigration和migrate，再创建超级用户
+
+  <img src="./readmeimg/2020-4-1-img/foreignkey.png">
+
+  同时数据库中也可以查询到
+
+  <img src="./readmeimg/2020-4-1-img/select.png">
+
+- 为了在admin管理的时候，直接显示课程名称，可以给course模型增加一个 __str__方法。这样所有course对象的str ，返回的是name字段。界面显示就是课程名称了
+  
+  <img src="./readmeimg/2020-4-1-img/model.png">
+
+- 当数据库有了值以后，就可以在view中验证查询自己成绩的功能是否正常了。views中的`@login_required`表示需要登录，我们这里已经用超级管理员登录了，所以是可以访问的。
+- `return render(request, 'score.html',{'result': result})`，其中render函数是一个Django内置的函数，用于在模板文件的基础上，通过渲染得到动态的网页效果。其中 score.html 是模板，后面的{} dict是参数，render必须传参reqeust。然后render函数就会在模板html文件的基础上，生成一个html并返回 HTTPResponse，所以可以直接作为 views函数的返回
+
+## 编写score.html
+
+在 templates目录下
+  
+<img src="./readmeimg/2020-4-1-img/static.png">
+
+```
+<html>
+<body>
+{% for i in result %}
+科目：{{ i.course.name }}
+成绩：{{ i.score }}
+<br>
+{% endfor %}
+</body>
+</html>
+```
+
+这里的result 就是 render传入的result。对每一个result 显示其课程名和分数。大家看到这里的多表查询 (course表中的name）直接.就调用出来了。模板语言的语法 {{ 变量名 }}
+
+注意，写了新的views函数，需要在`views.py`下增加url，如下所示
+
+<img src="./readmeimg/2020-4-1-img/addurl.png">
+
+这就完成了当前登录用户（超级管理员 admin 同学）的成绩查询。注意，这里我们偷了一个懒，实际情况，并不是每个用户都是超级管理员。需要有普通用户登录注册页面。这个页面需要自己写，我们这里时间关系，先不实现普通用户的登录，先用超级管理员用户验证一下查询功能。实际情况下普通用户 是不能访问 127.0.0.1:8000/admin页面的。
+
+<img src="./readmeimg/2020-4-1-img/adminscore.png">
 
 </details>
 

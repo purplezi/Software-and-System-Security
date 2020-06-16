@@ -92,7 +92,7 @@
     ?>
     ```
     - 详解
-- xss攻击过程
+- xss攻击过程：`<script>alert('xss attack')</script>`
   
   <img src="./img/xss1.gif">
 

@@ -16,8 +16,10 @@ def insert_into_db(course_id,student_id,grade):
             c.execute("INSERT INTO teacher VALUES (%s,%s,%s)" %(course_id,student_id,grade))
             # Save (commit) the change
             conn.commit()
+        else:
+            print("already exist")
     except:
-        print("already exist")
+        print("insert error, rollback...")
         conn.rollback()
     conn.close()
 
@@ -36,7 +38,7 @@ def select_from_db(course_id,student_id):
             conn.close()
             return res
     except:
-        print("error")
+        print("query error, close...")
         conn.close()
         return "error"
 
@@ -158,7 +160,7 @@ class MyHTTPServer(HTTPServer):
 # 程序入口
 if '__main__' == __name__:
     server_ip = "127.0.0.1"
-    server_port = 8080
+    server_port = 5000
     if len(sys.argv) == 2:
         server_port = int(sys.argv[1])
     if len(sys.argv) == 3:
