@@ -68,7 +68,7 @@
     xdebug.remote_enable = 1
     xdebug.remote_autostart = 1
     ```
-- 还未成功
+- debug下断点，不会停下
 
 ### XSS攻击
 
@@ -127,9 +127,90 @@
 
 ### Nginx + php
 
-### Apache + php
+- 安装
+    ```bash
+    sudo apt-get update
+    sudo apt-get install nginx
+    sudo apt-get install php
+    ```
+- 把/etc/nginx/sites-available/default的index修改
+  
+  <img src="./img/modifynginxdefault.png">
 
-# 问题与解决
+  ```
+  加入了一行配置 　　fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+  这个配置的意思是 在浏览器中访问的.php文件，实际读取的是 $document_root(网站根目录)下的.php文件 -- 也就是说当访问127.0.0.1/index.php的时候，需要读取网站根目录下面的index.php文件，如果没有配置这一配置项时，nginx不回去网站根目录下访问.php文件，所以返回空白
+  ```
+
+- 在/var/www/html下添加index.php，把上面的内容放入。代码根据虚拟机要稍做修改，比如要把提交改为 浏览器中显示的 Submit Query
+  ```html
+  <html>
+    <body>
+        <form name="form" method="post" action="">
+            <input type="text" name="name">
+            <input type="submit" name="submit">
+        </form>
+        <?php
+            if(isset($_POST["name"]) && $_POST["submit"]=="Submit Query"){
+                $name=$_POST["name"];
+                echo "welcome $name";
+            }
+        ?>
+    </body>
+  </html>
+  ```
+- 然后
+  ```
+  sudo nginx -t
+  sudo nginx -s reload 
+  sudo service php7.0-fpm start
+  ```
+- 在网页中打开
+  
+  <img src="./img/ubuntu-xss.gif">
+
+- ~~Apache + php~~
+  - Apache太重量级，先略
+
+## 预防XSS攻击
+
+- PHP htmlspecialchars() 函数
+  - 会把预定义的字符如 "<" （小于）和 ">" （大于）转换为 HTML 实体
+  - 预定义的字符是
+    ```
+    & （和号）成为 &
+    " （双引号）成为 "
+    ' （单引号）成为 '
+    < （小于）成为 <
+    > （大于）成为 >
+    ```
+  - 第二个参数
+    ```
+    ENT_COMPAT - 默认。仅编码双引号。
+    ENT_QUOTES - 编码双引号和单引号。
+    ENT_NOQUOTES - 不编码任何引号
+  - php部分修改为
+    ```php
+    <?php
+        if(isset($_POST["name"]) && $_POST["submit"]=="Submit Query"){
+            $name=$_POST["name"];
+            echo "welcome ";
+            echo htmlentities($name, ENT_QUOTES);
+        }
+    ?>
+    ```
+  - 结果
+    
+    <img src="./img/htmlspecialchars.gif">
+
+  - 但是使用htmlspecialchar()过滤后会使有些需要显示的Html效果被屏蔽掉
+- `strip_tags($string);`这个函数可以除去字符串中HTML和PHP标签，仅仅保留参数中指定的标签。例如`strip_tags($string, '<a>')`，表示只允许a标签，如果是不加第二个参数，则html标签都会被过滤
+  
+  下面的例子修改为只允许h1标签，结果如下
+  
+  <img src="./img/striptags.gif">
+  
+- 用封装好的正则去处理
 
 # 实验总结
 
