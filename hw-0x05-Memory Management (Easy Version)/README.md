@@ -14,7 +14,7 @@
 
 - 编写代码
   
-    ```
+    ```cpp
     #include<stdio.h>
     #include<malloc.h>
     int main()
@@ -22,11 +22,11 @@
         // sizeof获取了数据在内存中所占用的存储空间，以字节为单位来计数
         // win10 64bit C语言 sizeof(int) = 4B
         // 虚拟内存基本管理单元大小为4KB
-        // 4B x 1K = 4KB
-        // 2B x 1K = 2KB
+        // 4B x 1024 = 4KB
+        // 2B x 2048 = 4KB
         printf("int所占的字节数为sizeof(int) = %d\n", sizeof(int));
         int len1 = 1e2;
-        int len2 = 1e3;
+        int len2 = 1024;
         int* a = (int*)malloc(sizeof(int) * len1);
         // 4KB以内
         for (int i = 0; i < len2; i++) {
@@ -35,6 +35,7 @@
         for (int i = 0; i < len2; i++) {
             printf("a[%d]=%d ", i, a[i]);
         }
+        puts("\n\n4KB success!!\n");
         // 超过4KB
         for (int i = len2; i < len2 + 100; i++) {
             a[i] = i;
@@ -42,11 +43,12 @@
         for (int i = len2; i < len2 + 100; i++) {
             printf("a[%d]=%d ", i, a[i]);
         }
+        puts("\n\nOver 4KB success!!\n\n");
         return 0;
     }
     ```
 
-- Visual Studio在直接运行的情况下，在4KB内能够跑出结果，不会报错；在超过4KB一部分后，能够跑出结果，但会报错
+- Visual Studio在直接运行的情况下，在4KB内能够跑出结果，不会报错；在超过4KB一部分后，能够跑出结果，但会报错；但超过太多的时候，比如达到了1KB、2KB等以上，就跑不出结果了
 
     <img src="./img/malloc1.png">
 
