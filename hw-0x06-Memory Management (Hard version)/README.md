@@ -219,28 +219,111 @@ int main() {
         # 看看具体是怎么解析加载符号
         .reload /f ntkrnlmp
         ```
+    
+    <img src="./img/httpsendrequest.png">
 
-#### Windbg如何在内核调试情况下看物理内存，也就是通过物理地址访问内存
+    - 无法访问网络
 
-##### 查看物理内存
+    - 最后的解决方法：https://blog.csdn.net/xiangbaohui/article/details/103832850
+    - 那么WINDBG为什么无法从官网下载符号表呢？主要是我们的WINDBG设置的不够科学，没有搭建梯子，需要我们自建梯子
+    - 根据自己的梯子，在命令行下输入
+        
+        ```
+        # 可以在windows的自动代理设置下查看
+        set _NT_SYMBOL_PROXY=127.0.0.1:1084
+
+        # 然后再用该命令行打开windbg
+        ```
+
+        <img src="./img/cmdset.png">
+
+    - 最终访问成功
+
+        <img src="./img/fixsymbolerror.png">
+
+#### x64 寻址简介
+
+在保护模式，CPU发出的线性地址，内存管理单元(MMU)，根据当前CR3寄存器所指向的页表物理地址将该线性地址翻译成物理地址进行内存访问，该过程称为地址翻译。在x64体系结构中，线性地址的结构如图
+
+<img src="./img/64-virtualaddress.png"> 
+
+主要讨论的是4K页面大小的寻址方式，因为在个人计算机上，普遍都是4K；页面寻址，其他的方式也主要就是页面大小的差异。
+
+4K页面： 使用PML4T，PDPT，PDT和PT 四级页转化表结构；
+
+##### 使用WinDbg查看保护模式分页机制下的物理地址
+
+- 在windbg的debug下选择Go
+- 在虚拟机中打开notepad.exe，并且写入helloworld
+  
+  <img src="./img/notepad.png" width=70%>
+
+- 然后点击WinDbg的break按钮，使操作系统断下来
+- 使用 `!process 0 0` 命令查看当前系统所有进程信息，找到记事本所在进程
+  
+  <img src="./img/notepadprocess.png">
+
+  - 记事本进程的进程块起始地址为fffffa8002d0a060
+- 当前是在系统进程断下，所以此时我们要切换到记事本的进程。使用.process -i fffffa8002d0a060(进程块地址)命令，在输入 g 命令将WinDbg当前调试进程切换到notepad.exe，然后我们使用s -u命令再记事本进程中搜索 helloworld 这个字符串`s -u 0x00000000 L0x01000000 "helloworld"`
+  
+  <img src="./img/findhelloworld.png">
+
+    - virtualaddress：000000000026e7b0
+
+        <img src="./img/format.png">
+        
+    - 转化为二进制：  
+    
+         0000 0000 0 | 000 0000 00 | 00 0000 001 | 0 0110 1110 | 0111 1011 0000
+
+- 目标进程的DirBase页表基址是`7652b000`
+  
+  <img src="./img/ptevirtualaddress.png">
+
+- 因为PML4E的索引为0，所以我们的目标PML4E项的值为0x3bf000007606e867，12~35位为0x07606e，低12位补零，则
+  
+  <img src="./img/pml4e.png">
+
+- PDPTE的索引也为0，目标PDPTE项的值为 0x47b00000`76335867，PS位(第7位)为0，12~35位为 0x 076335 ，低12位补零，则：
+  
+  <img src="./img/pdpte.png">
+
+- 因为PDE的索引为1，所以我们要加上8，目标PDE项的值为 ：05000000`75cc8867，PS位(第7位)为0，12~35位为 0x75cc8，低12位补零，则：
+  
+  <img src="./img/pde.png">
+
+- PTE的索引为0x6e，所以要加上0x6e*8,得到目标PTE项的值为：cab00000`75c12867
+- 12~35位为 0x075c12，低12补零，得到页面物理基地址，再加上页面偏移，我们是0x7b0,则：
+  
+  <img src="./img/pte+bia.png">
+
+##### Windbg如何在内核调试情况下看物理内存，也就是通过物理地址访问内存
 
 ```
 !address： 显示内存信息，比如内存的地址范围
 ```
 
-##### 通过物理地址访问内存
-
-#### 如何查看进程的虚拟内存分页表，在分页表中找到物理内存和虚拟内存的对应关系。然后通过Windbg的物理内存查看方式和虚拟内存的查看方式，看同一块物理内存中的数据情况
-
-##### 查看进程的虚拟内存分页表
-
-##### 物理内存和虚拟内存的对应关系
-
 ##### 然后通过Windbg的物理内存查看方式和虚拟内存的查看方式，看同一块物理内存中的数据情况
 
-#### 内核调试案例
+虚拟地址通过pte指令，找到pfn(页帧号，页帧有唯一的物理地址，将该地址 x/1000h，所产生的一个唯一的编号)
 
+找到pte对应的pfn为75c12，单位是4k（4096）
 
+<img src="./img/findpfn.png">
+
+据pfn和相对地址，找到虚拟地址对应物理地址位置
+
+pfn为0x75c12，则物理页地址是0x75c12000（0x75c12 × 0x1000）
+
+页内偏移是7b0 
+
+物理地址=**物理页地址**+**页内偏移** = 0x75c12000+0x9e0 = 0x75c127b0
+
+<img src="./img/physicalandvirtualaddress.png">
+
+##### 分页内存和非分页内存
+
+##### 内核调试案例
 
 ## Conclusion
 
@@ -248,6 +331,9 @@ int main() {
 
 ## References
 
+- [windbg由虚拟地址查找对应物理地址（内核调试）](https://blog.csdn.net/wesley2005/article/details/81303435)
+- [参考资料](https://www.cnblogs.com/lanrenxinxin/p/4735027.html)
+- [虚拟地址空间](https://docs.microsoft.com/zh-cn/windows-hardware/drivers/gettingstarted/virtual-address-spaces)
 - https://www.cnblogs.com/ck1020/p/6148399.html
 - https://blog.csdn.net/lixiangminghate/article/details/54667694
 - https://blog.csdn.net/weixin_42486644/article/details/80747462
