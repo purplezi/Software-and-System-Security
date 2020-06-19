@@ -871,7 +871,7 @@ malloc函数底层也会调用VirtualAlloc函数。当没有足够的整页的�
 2. 编程使用malloc分配一段内存，测试是否这段内存所在的整个4KB都可以写入读取
 3. 使用VirtualAlloc分配一段，可读可写的内存，写入内存，然后将这段内存改为只读，再读数据和写数据，看是否会有异常情况。然后VirtualFree这段内存，再测试对这段内存的读写释放正常。
 
-### [实验结果](./hw-0x05-Memory%20Management%20(Easy%20Version)/README.md)
+### [实验结果](./hw-0x04-Memory%20Management%20(Easy%20Version)/README.md)
 
 ## 参考资料
 
@@ -1269,7 +1269,7 @@ shellcode进入到了一个完全陌生的环境。早期的黑客们思考能�
 
 代码中大量使用到了硬编码的偏移地址，比如
 
-<img src="./readmeimg/hardcode-address.png" width=50%>
+<img src="./readmeimg/2020-4-22-img/hardcode-address.png" width=50%>
 
 就是因为上面这些说到的系统的数据结构，都是固定的结构，在每个系统中都是一样的，所以可以固定。
 
