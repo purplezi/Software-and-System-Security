@@ -16,6 +16,31 @@
 - Apache/Nginx + php
 - php + vscode的php插件
 
+### Windows下PHP环境环境搭建(用vscode php插件)
+
+#### Install PHP
+
+- [php官网下载链接](https://windows.php.net/download/)，下载版本`php-7.4.7-Win32-vc15-x64 Thread Safe`，验证散列值
+- 将下载的 `.zip `压缩包解压到指定目录为`E:\php`
+- 将 PHP 的根目录下的 php.ini-development 或者 php.ini-production复制一份并改名为 php.ini，作为PHP的配置文件
+- 打开php.ini，修改配置信息:
+  - ini文件的注释是英文分号，取消`; extension_dir = "ext" `的注释
+  - 或者修改为extension_dir = "\${phphome}\ext"；${phphome}是PHP的根目录，配置文件中写成绝对路径，即`E:\php`
+  - 启用需要加载的扩展文件(这将取决于要使用的库，但是以下扩展名应该适合大多数应用程序)
+        ```
+        extension=curl
+        extension=gd2
+        extension=mbstring
+        extension=mysql
+        extension=pdo_mysql
+        extension=xmlrpc
+        ```
+- 将`E:\php`添加至环境变量
+
+#### 运行php文件
+
+- vscode上的插件：php server(Serve Project)直接可以在浏览器跑了 
+
 ### ~~Windows下Apache / Nginx +php环境搭建~~
 
 虽然可以搭建，但是一般不在Windows下搭建Web服务器，一般选择Linux
@@ -50,18 +75,19 @@
 - 将自己的php文件(test.php)放入`Apache24/htdocs`目录下
 - 编辑Apache的httpd.conf
   - 查找LoadModule，在配置文件尾部加入
-        ```conf
-        LoadModule php7_module E:/php/php7apache2_4.dll
-        PHPIniDir E:/php
-        ```
+    ```conf
+    LoadModule php7_module E:/php/php7apache2_4.dll
+    PHPIniDir E:/php
+    ```
   - 查找AddType  
-        ```conf
-        AddType application/x-httpd-php .php .html .htm
+        
+    ```conf
+    AddType application/x-httpd-php .php .html .htm
 
-        <IfModule dir_module>
-            DirectoryIndex index.html test.php
-        </IfModule>
-        ```
+    <IfModule dir_module>
+        DirectoryIndex index.html test.php
+    </IfModule>
+    ```
 - 保存配置，在命令行中运行httpd.exe -t检查配置
 - 启动apache服务，在浏览器中输入`localhost/test.php`
 
@@ -117,39 +143,8 @@
 - 开启php-cgi.exe：`php-cgi.exe -b 127.0.0.1:9001 -c php.ini` (该窗口不能关闭)
 - 访问`localhost/indes.php`可成功
 
-##### vscode + nginx + php调试
-
-- 参考[debug php文件(ext:php debug)](#debug-php文件extphp-debug)
-- php文件只能是如下框架，不能为`<html></html>`的框架
-    ```php
-    <?php
-    ?>
-    ```
-
-### Windows下PHP环境环境搭建(用vscode php插件)
-
-#### Install PHP
-
-- [php官网下载链接](https://windows.php.net/download/)，下载版本`php-7.4.7-Win32-vc15-x64 Thread Safe`，验证散列值
-- 将下载的 `.zip `压缩包解压到指定目录为`E:\php`
-- 将 PHP 的根目录下的 php.ini-development 或者 php.ini-production复制一份并改名为 php.ini，作为PHP的配置文件
-- 打开php.ini，修改配置信息:
-  - ini文件的注释是英文分号，取消`; extension_dir = "ext" `的注释
-  - 或者修改为extension_dir = "\${phphome}\ext"；${phphome}是PHP的根目录，配置文件中写成绝对路径，即`E:\php`
-  - 启用需要加载的扩展文件(这将取决于要使用的库，但是以下扩展名应该适合大多数应用程序)
-        ```
-        extension=curl
-        extension=gd2
-        extension=mbstring
-        extension=mysql
-        extension=pdo_mysql
-        extension=xmlrpc
-        ```
-- 将`E:\php`添加至环境变量
-
-#### 运行php文件
-
-- 插件：php server(Serve Project)直接可以在浏览器跑了 
+<details>
+<summary>调试php文件(实验无要求)</summary>
 
 #### debug php文件(ext:php debug)
 
@@ -195,6 +190,17 @@
         "port": 9000
     },
     ```
+
+##### vscode + nginx + php调试
+
+- 参考[debug php文件(ext:php debug)](#debug-php文件extphp-debug)
+- php文件只能是如下框架，不能为`<html></html>`的框架
+    ```php
+    <?php
+    ?>
+    ```
+
+</details>
 
 ### XSS攻击
 
