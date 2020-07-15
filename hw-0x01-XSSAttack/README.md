@@ -89,7 +89,8 @@
     </IfModule>
     ```
 - 保存配置，在命令行中运行httpd.exe -t检查配置
-- 启动apache服务，在浏览器中输入`localhost/test.php`
+- 启动apache服务：进入Apache24\bin\ 目录下，双击httpd.exe程序
+- 在浏览器中输入`localhost/test.php`，将Apache24\htdocs文件夹下面的 index.html 文件删除，我们刚才看到的 It works! 页面就是这个文件的作用，然后将我们的文件及文件夹放到 Apache24\htdocs 下面，浏览器就可以下载了
 
 #### Windows Nginx
 
