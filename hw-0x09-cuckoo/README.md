@@ -482,7 +482,7 @@ cuckoo 或者 cuckoo -d (会自动关闭虚拟机)
 
   - 先试着查找创建文件的行为，在搜索框输入“NtCreateFile”，搜索，如下
 
-    <img src="./img/NTCreateFile.png">
+    <img src="./img/NTcreatefile.png">
 
   - 试着查找修改注册表的行为，在搜索框输入“RegSetValueExA”，可以看到服务的键值指向了刚才的exe程序路径
     
