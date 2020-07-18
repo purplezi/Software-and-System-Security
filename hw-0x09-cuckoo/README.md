@@ -21,14 +21,13 @@
 > 根据cuckoo的架构可以得知，一个恶意软件被安装配置了cuckoo的host提交到各个guest进行运行分析时，host是想要知道guest的所有流量信息的，因为绝大部分的恶意软件搞破坏都依赖网络。
 > 此时只有设置Host-Only连接，host才能截获guest与互联网之间流经的所有流量，才能更好的分析恶意软件的行为方式。
 
-
 照众多教程，应该是在Ubuntu主机中安装virtualbox，然后再在这个virtualbox中新建一个win7客机虚拟机。然鹅我们此处的环境是在Ubuntu主机和Win7客机都是virtualbox的虚拟机，所以要在虚拟机中再装一个虚拟机 [ 电脑吃不消 ] 
 
 <img src="./img/nested.png" width=50%>
 
 <img src="./img/topology.png" width=70%>
 
-如果不使用套娃行为，将Host和Guest都安装在物理主机的Virtualbox软件中进行测试，我还实现不了
+~~如果不使用套娃行为，将Host和Guest都安装在物理主机的Virtualbox软件中进行测试，我还实现不了~~
 
 ## Preparing the Host 
 
@@ -101,6 +100,12 @@ $ . venv/bin/activate
   > pip install setuptools==44.0.0
 - 提示有什么依赖包没有获取需要retry到则重新pip install，依赖包的版本需要严格按照提示安装
 
+### Guest、网络配置以及cuckoo conf配置文件的编写
+
+<details>
+
+<summary>又浪费了我在阳间的几秒钟 - 测试host和guest都安装在物理主机上，某些配置作为参考</summary>
+
 ### Preparing the Guest
 
 > We recommend either 64-bit Windows 7 or Windows XP virtual machines. For Windows 7 you will have to disable User Access Control.
@@ -109,6 +114,8 @@ $ . venv/bin/activate
 ```cmd
 # windows python 2.7.12 https://www.python.org/downloads/release/python-2712/
 
+# 安装PIL：命令行进到C:\Python27\Scripts路径下
+# pip install Pillow -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
 #### 虚拟网络设置
@@ -204,10 +211,9 @@ $ sudo service dnsmasq start
     reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v LocalAccountTokenFilterPolicy /d 0x01 /t REG_DWORD /f
     ```
 
-安装PIL：命令行进到C:\Python27\Scripts路径下`pip install Pillow -i https://pypi.tuna.tsinghua.edu.cn/simple`
-
 #### 创建快照
 
+- 保证在agent.py或者agent.pyw启动时
 - 用virtualbox创建，名为`snapshot1`
 - cuckoo在每次执行任务的时候会先恢复虚拟机快照
 
@@ -257,7 +263,7 @@ controlports = 5000-5050
 [cuckoo1]  # 需要与machines一致
 label = cuckoo1 # 你的虚拟机名称，需要与machines一致
 platform = windows
-ip = 192.168.56.101 # 虚拟机IP 
+ip = 192.168.56.2 # 虚拟机IP 
 snapshot = snapshot1 # 创建的快照名称
 ```
 
@@ -297,26 +303,198 @@ paginate = 100
 
   觉得应该是guest客机和主机没有配置好的缘故
   
-  但是`cuckoo web`仍旧可以访问页面，但是没有了guest是无法分析出东西的，页面只会是pending状态，分析不出结果
+  但是`cuckoo web`仍旧可以访问页面，但是没有了guest是无法分析出东西的，页面只会是pending状态，分析不出结果 - 唔 这也可能是需要的时间太久了
 
   <img src="./img/pending.png">
 
+</details>
+
 <details>
 
-<summary>还是乖乖的套娃吧</summary>
+<summary>看这看这，还是乖乖的套娃吧</summary>
 
-### Installing the Guest
+### the Guest - [部分步骤可参照前]
 
-- 在Ubuntu中装virtualbox
+- [在Ubuntu中装virtualbox](#requirements)
+  ```bash
+  # 安装增强功能
+  sudo apt-get install virtualbox-ext-pack
+
+  # 打开virtualbox
+  virtualbox --version
+  ```
+- 在Virtualbox下只能选择win7 x32，取名为`cuckoo1`
+  
+  <img src="./img/horrible-nested.png" width=50%>
+
+- Turn off firewall，同理Turn off auto update和Turn Windows UAC to minimum
+  
+  <img src="./img/firewall.png">
+
+- [Install Python 2.7 和 Pillow](#preparing-the-guest)
+- [Install the Cuckoo Agent](#installing-the-agent)
+
+#### Network for the Guest
+
+给guest配置一个host-only网卡：vboxnet0，这样guest只能和Cuckoo host通信。并配置网卡固定IP地址：192.168.56.1，如下图：
+
+<img src="./img/vboxnet0-modify.png">
+
+再配置guest Windows 7的网络：
+- [参见](#虚拟网络设置)
+- ip: 192.168.56.2(其它亦可)
+- 掩码: 255.255.255.0
+- 网关: 192.168.56.1
+- preferred DNS server：192.168.56.1
+- alternate DNS server：114.114.114.114
+  
+Cuckoo guest与Cuckoo host互ping，验证是否配置成功
+
+<img src="./img/guesthostping-success.png">
+
+#### Config Cuckoo Host Packet Forward(报文转发)
+
+由于guest配置是host-only的，不能直接访问Internet。所以要在Cuckoo host中用iptable，设置报文转发
+
+```bash
+$ sudo iptables -A FORWARD -o enp0s3 -i vboxnet0 -s 192.168.56.0/24 -m conntrack --ctstate NEW -j ACCEPT
+$ sudo iptables -A FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+$ sudo iptables -A POSTROUTING -t nat -j MASQUERADE
+```
+- enp0s3是本地机器Cuckoo host网络适配器的名字
+- 配置完成后，guest Windows 7就可以访问Internet，cuckoo host仍旧可以访问Internet
+  
+  <img src="./img/guestaccessinternet.png">
+
+如果希望报文转发重启后依然有效：
+- 修改/etc/sysctl.conf
+- 去掉net.ipv4.ip_forward=1的注释
+- 执行`$ sudo sysctl -p /etc/sysctl.conf`
+
+再运行：
+```bash
+$ sudo apt-get install iptables-persistent
+$ sudo netfilter-persistent save
+```
+
+### 配置conf文件
+
+cuckoo.conf
+
+```conf
+[resultserver]
+ip = 192.168.56.1 # 此处填写主机host-only网卡设置的静态IP
+
+[cuckoo]
+version_check = no # 每次启动都要检查更新很费时间，可以选择关闭
+machinery = virtualbox
+
+memory_dump = yes
+```
+
+auxillary.conf
+
+```conf
+[sniffer]
+enabled = yes
+tcpdump = /usr/sbin/tcpdump # which tcpdump
+```
+
+virtualbox.conf
+```conf
+[virtualbox]
+mode = gui # gui是有界面，headless是无界面，调试的时候可以选择
+path = /usr/bin/vboxmanage
+interface = vboxnet0
+machines = cuckoo1 # 你的虚拟机名称 即启动win7 输入密码对应的用户名
+controlports = 5000-5050
+
+[cuckoo1]  # 需要与machines一致
+label = cuckoo1 # 你的虚拟机名称，需要与machines一致
+platform = windows
+ip = 192.168.56.2 # 虚拟机IP 
+snapshot = snapshot1 # 创建的快照名称
+```
+
+report.conf
+
+```conf
+[singlefile] # Enable creation of report.html and/or report.pdf?
+enabled = yes
+# Enable creation of report.html?
+html = yes
+# Enable creation of report.pdf?
+pdf = no
+
+[mongodb] enabled = yes
+host = 127.0.0.1
+port = 27017
+db = cuckoo
+store_memdump = yes
+paginate = 100
+```
+
+[其余的conf参照](#cuckoo配置)
 
 </details>
 
+### 启动Cuckoo
+
+cuckoo 或者 cuckoo -d (会自动关闭虚拟机)
+
+> ERROR: Error in analysis manager cleanup: 'AnalysisManager' object has no attribute 'aux'
+> Traceback (most recent call last):
+>  File "/home/zizi/venv/local/lib/python2.7/site-packages/cuckoo/core/scheduler.py", line 961, in _cleanup_managers
+>    am.cleanup()
+>  File "/home/zizi/venv/local/lib/python2.7/site-packages/cuckoo/core/scheduler.py", line 820, in cleanup
+>    self.aux.stop()
+> AttributeError: 'AnalysisManager' object has no attribute 'aux'
+> 解决方法：修改对应的文件/home/zizi/venv/local/lib/python2.7/site-packages/cuckoo/core/scheduler.py，将self.aux.stop()注释
+
+同时 cuckoo web runserver
+
+<img src="./img/start-success.png">
+
+上传，提交，分析，会自动打开win7虚拟机[ 快照 ]，在win7虚拟机中运行
+
+<img src="./img/startsnapshot.png" width=70%>
+
+分析成功
+
+<img src="./img/completed.png">
+
+点击reported会出现分析过程以及运行截图
+
+<img src="./img/screenshot.png">
+
+- hh，这是个人畜无害的小游戏，由于win7没有他的执行环境，所以并未分析出什么
+- 试分析了熊猫烧香，左侧选择“Behavioral Analysis”，恶意样本一般包含创建文件和修改注册表的行为
+  - 熊猫烧香的原理：
+    > 1. 拷贝文件：病毒运行后，会把自己拷贝到C:\WINDOWS\System32\Drivers\spoclsv.exe 
+    > 2. 添加注册表自启动：病毒会添加自启动项HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run svcshare -> C:\WINDOWS\System32\Drivers\spoclsv.exe 
+    > 3. 病毒行为 [ 略述 ]
+    >    a. 每隔1秒寻找桌面窗口,并关闭窗口标题中含有以下字符的程序： 防火墙、进程...
+    >    b. 感染文件  & 删除文件
+    >    d. 每隔6秒删除安全软件在注册表中的键值
+  - 进程树
+    
+    <img src="./img/process-tree.png">
+
+  - 先试着查找创建文件的行为，在搜索框输入“NtCreateFile”，搜索，如下
+
+    <img src="./img/NTCreateFile.png">
+
+  - 试着查找修改注册表的行为，在搜索框输入“RegSetValueExA”，可以看到服务的键值指向了刚才的exe程序路径
+    
+    <img src="./img/RegSetValueExA.png">
+
 ## Reference
 
+- [Cuckoo Sandbox沙箱系列(一)-安装配置Host](https://maofeichen.com/systemsecurity/2019/04/11/cuckoo-install-01.html#1-architecture--network-topology)
+- [Cuckoo Sandbox沙箱系列(二)-安装配置Guest](maofeichen.com/systemsecurity/2019/04/24/cuckoo-install-02.html#1-prepare-the-guest)
 - https://blog.csdn.net/baobaoyu_/article/details/103047082
 - https://blog.csdn.net/Bingoooooo_/article/details/94248229
-
-在win10上搭建的参考资料
-
-- [Cuckoo Linux Subsystem: Some Love for Windows 10](https://www.trustwave.com/en-us/resources/blogs/spiderlabs-blog/cuckoo-linux-subsystem-some-love-for-windows-10/)
-- [从零开始搭建Cuckoo Sandbox(1)](https://www.secpulse.com/archives/74821.html)
+- https://cuckoo.cert.ee/dashboard/
+- 以win10 wsl作为host上搭建的参考资料
+  - [Cuckoo Linux Subsystem: Some Love for Windows 10](https://www.trustwave.com/en-us/resources/blogs/spiderlabs-blog/cuckoo-linux-subsystem-some-love-for-windows-10/)
+  - [从零开始搭建Cuckoo Sandbox(1)](https://www.secpulse.com/archives/74821.html)
